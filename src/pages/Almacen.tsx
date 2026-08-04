@@ -41,7 +41,10 @@ export default function Almacen() {
 
   useEffect(() => {
     Promise.all([listClasificaciones(), listCuentasContables()])
-      .then(([clases, cuentas]) => { setClasificaciones(clases); setCuentasContables(cuentas); })
+      .then(([clases, cuentas]) => {
+        setClasificaciones(clases.data.items);
+        setCuentasContables(cuentas.data.items);
+      })
       .catch(() => {});
   }, []);
 
