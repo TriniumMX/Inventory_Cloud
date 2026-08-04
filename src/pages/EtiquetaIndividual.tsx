@@ -4,7 +4,7 @@ import { Label50x25 } from "@/components/labels/Label50x25";
 import { listActivos } from "@/lib/api";
 import { Activo } from "@/lib/types";
 import { Loader2 } from "lucide-react";
-import heraldica from "@/assets/heraldica-sjr.png";
+import logoFull from "@/assets/logo.png";
 
 const EtiquetaIndividual = () => {
   const { inventoryCode } = useParams<{ inventoryCode: string }>();
@@ -69,8 +69,8 @@ const EtiquetaIndividual = () => {
     );
   }
 
-  const orgName = import.meta.env.VITE_ORG_NAME || "SAN JUAN DEL RÍO - H. AYUNTAMIENTO";
-  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || heraldica;
+  const orgName = import.meta.env.VITE_ORG_NAME || "INVENTORY CLOUD";
+  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || logoFull;
   const labelUrlBase = import.meta.env.VITE_LABEL_URL_BASE || window.location.origin;
   const isDemo = !import.meta.env.VITE_LABEL_URL_BASE || labelUrlBase.includes("localhost");
 

@@ -141,8 +141,8 @@ export function EditarInmuebleModal({
       niveles: "",
       colonia: "",
       codigoPostal: "",
-      municipio: "San Juan del Río",
-      estado: "Querétaro",
+      municipio: "",
+      estado: "",
       latitud: "",
       longitud: "",
       superficieTerreno: "",
@@ -192,8 +192,8 @@ export function EditarInmuebleModal({
             : "",
         colonia: inmueble.colonia || "",
         codigoPostal: inmueble.codigoPostal || "",
-        municipio: inmueble.municipio || "San Juan del Río",
-        estado: inmueble.estado || "Querétaro",
+        municipio: inmueble.municipio || "",
+        estado: inmueble.estado || "",
         latitud:
           inmueble.latitud !== undefined && inmueble.latitud !== null
             ? String(inmueble.latitud)

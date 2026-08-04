@@ -104,12 +104,12 @@ const Index = () => {
               <img src={logo} alt="Inventory Cloud Logo" className="h-7 w-7 sm:h-10 sm:w-10 object-contain" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-3xl font-black tracking-tight text-slate-800 leading-tight">
+              <h1 className="notranslate text-xl sm:text-3xl font-black tracking-tight text-slate-800 leading-tight" translate="no">
                 Inventory<span className="text-primary">Cloud</span>
               </h1>
               <p className="text-slate-500 text-[10px] sm:text-sm font-medium mt-0.5 truncate">
                 Bienvenido, <span className="text-slate-700 font-bold">{user?.nombre || "Usuario"}</span>
-                <span className="hidden md:inline"> • Panel de control municipal</span>
+                <span className="hidden md:inline"> • Panel de control</span>
               </p>
             </div>
           </div>

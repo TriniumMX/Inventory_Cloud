@@ -136,8 +136,8 @@ export function NuevoInmuebleModal({
       niveles: "",
       colonia: "",
       codigoPostal: "",
-      municipio: "San Juan del Río",
-      estado: "Querétaro",
+      municipio: "",
+      estado: "",
       latitud: "",
       longitud: "",
       superficieTerreno: "",
@@ -251,7 +251,7 @@ export function NuevoInmuebleModal({
                 Nuevo Bien Inmueble
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm mt-0.5">
-                Registra un nuevo bien inmueble en el patrimonio municipal.
+                Registra un nuevo bien inmueble en el patrimonio.
               </DialogDescription>
             </div>
           </div>

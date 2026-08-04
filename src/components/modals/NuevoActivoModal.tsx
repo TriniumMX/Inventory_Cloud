@@ -165,8 +165,8 @@ export function NuevoActivoModal({
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm mt-0.5">
                 {tipo === 2
-                  ? "Registra un nuevo enser en el inventario municipal."
-                  : "Registra un nuevo bien mueble en el inventario municipal."}
+                  ? "Registra un nuevo enser en el inventario."
+                  : "Registra un nuevo bien mueble en el inventario."}
               </DialogDescription>
             </div>
           </div>

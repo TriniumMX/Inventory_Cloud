@@ -151,7 +151,7 @@ export default function BienesInmuebles() {
                 Bienes Inmuebles
               </h1>
               <p className="text-muted-foreground">
-                Registro y control del patrimonio inmobiliario municipal
+                Registro y control del patrimonio inmobiliario
               </p>
             </div>
           </div>

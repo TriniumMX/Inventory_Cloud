@@ -7,7 +7,7 @@ export default function BienesMuebles() {
       tipo={1}
       moduloClave="bienes-muebles"
       titulo="Bienes Muebles"
-      subtitulo="Gestión y control de activos del patrimonio municipal"
+      subtitulo="Gestión y control de activos del patrimonio"
       icono={Package}
       breadcrumbLabel="Bienes Muebles"
       labelSingular="Activo"

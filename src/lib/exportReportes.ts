@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { HERALDICA_DATA_URL } from "./heraldica";
+import logoImg from "@/assets/logo.png";
 
 // ============= INTERFACES =============
 export interface ActivoReporte {
@@ -117,7 +117,7 @@ function buildSheet(params: {
   };
 
   // Institution
-  fillRow("H. AYUNTAMIENTO DE SAN JUAN DEL RÍO",
+  fillRow(import.meta.env.VITE_ORG_NAME || "Inventory Cloud",
     cs({ bold: true, sz: 13, color: C.WHITE, bg: C.NAVY, align: "center" }));
   // Title
   fillRow(title, cs({ bold: true, sz: 11, color: C.WHITE, bg: C.BLUE, align: "center" }));
@@ -197,7 +197,7 @@ function buildSheet(params: {
 // ============= PDF HEADER HELPER =============
 function pdfHeader(doc: jsPDF, title: string, subtitle: string, total: number, pageWidth: number, margin: number): void {
   const pageHeight = doc.internal.pageSize.getHeight();
-  if (HERALDICA_DATA_URL) doc.addImage(HERALDICA_DATA_URL, "PNG", pageWidth - margin - 18, 5, 18, 18);
+  try { doc.addImage(logoImg, "PNG", pageWidth - margin - 18, 5, 18, 18); } catch { /* logo opcional */ }
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.text(title, pageWidth / 2, 11, { align: "center" });
@@ -408,7 +408,7 @@ export function exportarInmueblesExcel(items: InmuebleReporte[]): void {
     widths: [16, 28, 18, 38, 18, 16, 14, 14, 16, 14, 22, 16, 16, 16, 16, 22],
     rows: items.map(i => [
       i.numeroInventario || "", i.nombre || i.descripcion || "", i.tipoNombre || "",
-      i.direccion || "", i.colonia || "", i.municipio || "San Juan del Río",
+      i.direccion || "", i.colonia || "", i.municipio || "",
       i.superficieTerreno ?? "", i.superficieConstruccion ?? "",
       i.numeroEscritura || "", formatDate(i.fechaEscritura), i.notaria || "",
       i.claveCatastral || "",
@@ -446,7 +446,7 @@ export async function exportarInmueblesPDF(items: InmuebleReporte[]): Promise<st
       truncateText(i.nombre || i.descripcion, 30),
       i.tipoNombre || "",
       truncateText(i.direccion, 35),
-      i.municipio || "San Juan del Río",
+      i.municipio || "",
       i.superficieConstruccion ? i.superficieConstruccion.toLocaleString("es-MX") : "—",
       i.numeroEscritura || "—",
       i.claveCatastral || "—",

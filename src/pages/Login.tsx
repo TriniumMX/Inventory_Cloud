@@ -96,12 +96,8 @@ export default function Login() {
         >
           <div className="bg-white rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-10 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.3)] ring-4 lg:ring-8 ring-white/10 transition-transform duration-500 hover:scale-105 relative group">
             <div className="absolute inset-0 bg-primary/5 rounded-3xl lg:rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <img src={logo} alt="Logo" className="relative z-10 w-24 lg:w-52 h-auto object-contain" />
+            <img src={logo} alt="Inventory Cloud" className="relative z-10 w-24 lg:w-52 h-auto object-contain" />
           </div>
-          
-          <h1 className="text-3xl lg:text-5xl font-black text-white mt-6 lg:mt-10 tracking-tight drop-shadow-sm flex items-center gap-2 lg:gap-3 text-center">
-            Inventory <span className="font-light text-blue-200">Cloud</span>
-          </h1>
 
           {/* Creative Interactive Logistics Network (Desktop only) */}
           <div className="hidden lg:flex items-center justify-center w-full max-w-sm h-56 mt-8 relative">
@@ -156,7 +152,7 @@ export default function Login() {
           </div>
           
           <div className="mt-16 flex flex-col items-center opacity-85 hidden lg:flex">
-            <p className="text-xs font-semibold text-white/70">Desarrollado con cariño por Isra</p>
+            <p className="text-xs font-semibold text-white/70">Powered by Trinium</p>
             <p className="text-[10px] italic text-white/50 mt-0.5">"Tecnología con corazón"</p>
           </div>
         </div>
@@ -203,7 +199,7 @@ export default function Login() {
               Control Patrimonial
             </h2>
             <p className="text-slate-500 text-xs lg:text-sm font-medium">
-              Gestión de Bienes, Enseres y Resguardos Municipales
+              Gestión de Bienes, Enseres y Resguardos
             </p>
             <div className="flex justify-center pt-2">
               <Badge variant="outline" className="gap-1.5 bg-primary/5 text-primary border-primary/20 px-4 py-1.5 shadow-sm rounded-full font-bold">
@@ -309,7 +305,7 @@ export default function Login() {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-4 text-center rounded-2xl border-slate-100 shadow-2xl bg-white/95 backdrop-blur-md mb-2">
-                <p className="text-sm font-bold text-slate-800">Desarrollado con cariño por Isra</p>
+                <p className="text-sm font-bold text-slate-800">Powered by Trinium</p>
                 <p className="text-xs italic text-slate-500 mt-1">"Tecnología con corazón"</p>
               </PopoverContent>
             </Popover>

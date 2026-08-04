@@ -2,7 +2,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Empleado, Consigna } from './types';
-import { HERALDICA_DATA_URL } from './heraldica';
 import logoImg from '@/assets/logo.png';
 
 interface ActivoExport {
@@ -128,13 +127,6 @@ export const exportarResguardoPDF = async (data: ExportData): Promise<string> =>
       doc.addImage(logoImg, 'PNG', margin, 8, 18, 18);
     } catch (e) {
       console.warn('No se pudo cargar el logo corporativo');
-    }
-
-    // Escudo municipal (derecha, mantener proporción cuadrada)
-    try {
-      doc.addImage(HERALDICA_DATA_URL, 'PNG', pageWidth - margin - 18, 8, 18, 18);
-    } catch (e) {
-      console.warn('No se pudo cargar la heráldica');
     }
 
     // Título
@@ -386,12 +378,6 @@ export const exportarActaIncidenciasPDF = async (data: IncidenciasData): Promise
       doc.addImage(logoImg, 'PNG', margin, 8, 18, 18);
     } catch (e) {
       console.warn('No se pudo cargar el logo corporativo');
-    }
-
-    try {
-      doc.addImage(HERALDICA_DATA_URL, 'PNG', pageWidth - margin - 18, 8, 18, 18);
-    } catch (e) {
-      console.warn('No se pudo cargar la heráldica');
     }
 
     doc.setFontSize(14);

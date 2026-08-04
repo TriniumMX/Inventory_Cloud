@@ -1,7 +1,7 @@
 {
   "name": "Inventory Cloud",
   "short_name": "Inventory",
-  "description": "Sistema de gestión de inventarios municipales - Municipio de San Juan del Río",
+  "description": "Sistema de gestión de inventarios — control de bienes muebles, inmuebles, enseres y resguardos",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1f4e",

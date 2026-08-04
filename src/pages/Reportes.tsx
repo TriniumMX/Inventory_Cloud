@@ -78,7 +78,7 @@ const reportes: Reporte[] = [
   {
     id: "bienes-inmuebles",
     title: "Bienes Inmuebles",
-    description: "Inventario completo del patrimonio inmobiliario municipal con datos catastrales.",
+    description: "Inventario completo del patrimonio inmobiliario con datos catastrales.",
     icon: Building2,
     accent: "text-purple-700",
     accentBg: "bg-purple-50",
@@ -228,7 +228,7 @@ export default function Reportes() {
         <main className="flex-1 overflow-auto p-6 space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Reportes</h1>
-            <p className="text-muted-foreground">Genera y descarga reportes del inventario municipal</p>
+            <p className="text-muted-foreground">Genera y descarga reportes del inventario</p>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">

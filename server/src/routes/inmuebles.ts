@@ -138,7 +138,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
       [
         dto.numeroInventario, dto.direccion, parseInt(dto.idTipoInmueble), parseInt(dto.estatus),
         dto.nombre || null, dto.descripcion || null, dto.usoActual || null, pi(dto.niveles),
-        dto.colonia || null, dto.codigoPostal || null, dto.municipio || "San Juan del Río", dto.estado || "Querétaro",
+        dto.colonia || null, dto.codigoPostal || null, dto.municipio || null, dto.estado || null,
         p(dto.latitud), p(dto.longitud), p(dto.superficieTerreno), p(dto.superficieConstruccion),
         dto.numeroEscritura || null, dto.fechaEscritura || null, dto.notaria || null,
         dto.volumenLibro || null, dto.folioRegistro || null, dto.claveCatastral || null,

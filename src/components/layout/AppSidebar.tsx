@@ -140,11 +140,11 @@ export function AppSidebar() {
           </div>
           {open && (
             <div className="min-w-0">
-              <h1 className="text-[15px] font-black tracking-tight text-white truncate leading-tight">
+              <h1 className="notranslate text-[15px] font-black tracking-tight text-white truncate leading-tight" translate="no">
                 Inventory<span className="text-blue-300 font-semibold">Cloud</span>
               </h1>
               <p className="text-[9px] text-blue-300/60 font-semibold tracking-widest uppercase">
-                Municipio SJR
+                Sistema de Inventarios
               </p>
             </div>
           )}

@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { listActivos } from "@/lib/api";
 import { Activo } from "@/lib/types";
-import heraldica from "@/assets/heraldica-sjr.png";
+import logoFull from "@/assets/logo.png";
 
 interface LabelData {
   id: string;
@@ -33,8 +33,8 @@ const EtiquetaLote = () => {
   const showBarcodeText = searchParams.get("txt") !== "0";
   const copies = Math.max(1, Math.min(10, parseInt(searchParams.get("copies") || "1")));
 
-  const orgName = import.meta.env.VITE_ORG_NAME || "SAN JUAN DEL RÍO - H. AYUNTAMIENTO";
-  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || heraldica;
+  const orgName = import.meta.env.VITE_ORG_NAME || "INVENTORY CLOUD";
+  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || logoFull;
   const labelUrlBase = import.meta.env.VITE_LABEL_URL_BASE || window.location.origin;
   const isDemo = !import.meta.env.VITE_LABEL_URL_BASE || labelUrlBase.includes("localhost");
 

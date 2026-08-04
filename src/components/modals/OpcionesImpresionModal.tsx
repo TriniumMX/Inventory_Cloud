@@ -38,8 +38,8 @@ export function OpcionesImpresionModal({
     getLabelPreferences()
   );
 
-  const orgName = import.meta.env.VITE_ORG_NAME || "SAN JUAN DEL RÍO - H. AYUNTAMIENTO";
-  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || "/images/heraldica-sjr.png";
+  const orgName = import.meta.env.VITE_ORG_NAME || "INVENTORY CLOUD";
+  const logoUrl = import.meta.env.VITE_LABEL_LOGO_URL || "/logo.png";
   const labelUrlBase = import.meta.env.VITE_LABEL_URL_BASE || window.location.origin;
   const isDemo = !import.meta.env.VITE_LABEL_URL_BASE || labelUrlBase.includes("localhost");
 

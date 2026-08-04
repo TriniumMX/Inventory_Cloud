@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# Inventory Cloud
 
-## Project info
+Sistema de gestión de inventarios — control de bienes muebles, bienes inmuebles, enseres y resguardos, con bitácora de auditoría, permisos por módulo y generación de etiquetas/reportes.
 
-**URL**: https://lovable.dev/projects/d4cde67e-1bf8-4315-863a-56575d923531
+Desarrollado por [Trinium](https://github.com/TriniumMX).
 
-## How can I edit this code?
+## Stack
 
-There are several ways of editing your application.
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- [shadcn/ui](https://ui.shadcn.com/) + [Tailwind CSS](https://tailwindcss.com/)
+- [Supabase](https://supabase.com/) — Postgres, Auth (vía Edge Functions), Storage
+- [pnpm](https://pnpm.io/) como gestor de paquetes
 
-**Use Lovable**
+## Requisitos
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d4cde67e-1bf8-4315-863a-56575d923531) and start prompting.
+- Node.js
+- [pnpm](https://pnpm.io/installation)
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & pnpm installed - [install pnpm](https://pnpm.io/installation)
-
-Follow these steps:
+## Desarrollo local
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clonar el repositorio
+git clone https://github.com/TriniumMX/Inventory_Cloud.git
+cd Inventory_Cloud
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Instalar dependencias
 pnpm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Copiar y completar las variables de entorno
+cp .env.example .env   # si no existe .env.example, ver la sección de abajo
+
+# Levantar el servidor de desarrollo
 pnpm dev
 ```
 
-**Edit a file directly in GitHub**
+### Variables de entorno
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+El frontend se conecta directamente a Supabase (auth, base de datos y storage). Variables requeridas en `.env`:
 
-**Use GitHub Codespaces**
+```sh
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_PROJECT_ID=
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+VITE_ORG_NAME=
+VITE_LABEL_LOGO_URL=/logo.png
+VITE_LABEL_URL_BASE=
+```
 
-## What technologies are used for this project?
+## Scripts
 
-This project is built with:
+```sh
+pnpm dev        # servidor de desarrollo
+pnpm build      # build de producción (dist/)
+pnpm lint       # eslint
+pnpm preview    # preview del build de producción
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Estructura del proyecto
 
-## How can I deploy this project?
+- `src/` — aplicación React (páginas, componentes, lógica de acceso a datos en `src/lib/`)
+- `supabase/migrations/` — migraciones SQL del esquema de base de datos
+- `supabase/functions/` — Edge Functions (auth, consulta de empleados)
+- `server/` — backend Express legado (ya no se usa en producción; el frontend habla directo con Supabase)
 
-Simply open [Lovable](https://lovable.dev/projects/d4cde67e-1bf8-4315-863a-56575d923531) and click on Share -> Publish.
+## Despliegue
 
-## Can I connect a custom domain to my Lovable project?
+El proyecto está conectado a [Vercel](https://vercel.com/) mediante el repositorio de GitHub — cada push a `main` dispara un deploy automático.
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Ver [`DEPLOY.md`](./DEPLOY.md) para la convención de commits del equipo y notas de despliegue adicionales.
