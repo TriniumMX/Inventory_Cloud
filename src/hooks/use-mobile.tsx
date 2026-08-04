@@ -1,6 +1,9 @@
 import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768;
+// Usado por el sidebar para decidir cuándo mostrarse como overlay (Sheet) en vez de
+// empujar el contenido. Se sube a 1024 para que tablets tengan el mismo comportamiento
+// que móvil: el sidebar se abre encima del contenido y se cierra al navegar.
+const MOBILE_BREAKPOINT = 1024;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);

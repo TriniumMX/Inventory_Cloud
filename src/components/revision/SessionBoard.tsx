@@ -3,8 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, AlertCircle, AlertTriangle, Loader2, Clock } from "lucide-react";
 import type { RevisionSession, ScanRecord } from "@/lib/revisionStore";
-import { analyzeSession } from "@/lib/revisionStore";
-import { apiFetch } from "@/lib/apiClient";
+import { analyzeSession, getActivosInfo } from "@/lib/revisionStore";
 import { cn } from "@/lib/utils";
 
 interface ExtraItemInfo {
@@ -58,11 +57,9 @@ export function SessionBoard({ session }: SessionBoardProps) {
     const extraInvs = Array.from(analysis.extra);
     if (extraInvs.length === 0) return;
     setLoadingExtras(true);
-    apiFetch<{ data: { numero_inventario: string; descripcion: string | null; ultimo_nomina: string | null }[] }>(
-      `/api/revision/activos-info?nums=${extraInvs.map(encodeURIComponent).join(",")}`
-    ).then((res) => {
+    getActivosInfo(extraInvs).then((items) => {
       const map = new Map<string, ExtraItemInfo>();
-      for (const item of res.data || []) {
+      for (const item of items) {
         if (item.numero_inventario)
           map.set(item.numero_inventario, { descripcion: item.descripcion ?? undefined, ultimoNomina: item.ultimo_nomina ?? undefined });
       }

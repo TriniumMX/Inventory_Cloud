@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Column<T> {
   key: string;
@@ -116,8 +117,79 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Responsive table wrapper */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* Listado en tarjetas — solo en pantallas angostas (móvil) */}
+      <div className="sm:hidden space-y-3">
+        {paginatedData.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
+            No se encontraron resultados
+          </div>
+        ) : (
+          paginatedData.map((item, index) => {
+            const selectColumn = columns.find((c) => c.key === "select");
+            const accionesColumn = columns.find((c) => c.key === "acciones");
+            const fieldColumns = columns.filter((c) => c.key !== "select" && c.key !== "acciones");
+            const [titleColumn, ...restColumns] = fieldColumns;
+
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "relative rounded-xl border border-border bg-card shadow-sm p-4 space-y-2.5 transition-colors",
+                  onRowClick && "cursor-pointer active:bg-muted/40"
+                )}
+                onClick={() => onRowClick?.(item)}
+              >
+                {selectColumn && (
+                  <div
+                    className="absolute top-3 right-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {selectColumn.render ? selectColumn.render(item) : null}
+                  </div>
+                )}
+
+                {titleColumn && (
+                  <div className={selectColumn ? "pr-8" : undefined}>
+                    <p className="text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-0.5">
+                      {titleColumn.label}
+                    </p>
+                    <div className="text-sm font-semibold text-foreground">
+                      {titleColumn.render ? titleColumn.render(item) : item[titleColumn.key]}
+                    </div>
+                  </div>
+                )}
+
+                {restColumns.length > 0 && (
+                  <div className="pt-2 border-t border-border/60 space-y-1.5">
+                    {restColumns.map((column) => (
+                      <div key={column.key} className="flex items-start justify-between gap-3">
+                        <span className="text-[9.5px] font-bold uppercase tracking-wider text-muted-foreground/80 flex-shrink-0 pt-0.5">
+                          {column.label}
+                        </span>
+                        <span className="text-xs text-foreground text-right min-w-0">
+                          {column.render ? column.render(item) : (item[column.key] ?? "—")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {accionesColumn && (
+                  <div
+                    className="flex items-center justify-end gap-1 pt-2 border-t border-border/60"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {accionesColumn.render ? accionesColumn.render(item) : null}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Tabla — desde sm (tablet/desktop) */}
+      <div className="hidden sm:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

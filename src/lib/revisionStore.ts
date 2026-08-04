@@ -1,4 +1,4 @@
-import { apiFetch } from "./apiClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ScanRecord {
   inv: string;
@@ -205,20 +205,19 @@ export async function syncSessionToSupabase(
   userId: number
 ): Promise<void> {
   try {
-    await apiFetch(`/api/revision/${session.id}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        id_usuario: userId,
-        mode: session.mode,
-        responsable_id: String(session.target.responsableId ?? ""),
-        responsable_nombre: session.target.responsableNombre ?? "",
-        responsable_tipo: session.target.responsableTipo ?? "",
-        expected: session.expected,
-        scans: session.scans,
-        notes: session.notes ?? null,
-        estatus: "activa",
-      }),
+    const { error } = await supabase.from("revision_sesiones").upsert({
+      id: session.id,
+      id_usuario: userId,
+      mode: session.mode,
+      responsable_id: String(session.target.responsableId ?? ""),
+      responsable_nombre: session.target.responsableNombre ?? "",
+      responsable_tipo: session.target.responsableTipo ?? "",
+      expected: session.expected as unknown as never,
+      scans: session.scans as unknown as never,
+      notes: session.notes ?? null,
+      estatus: "activa",
     });
+    if (error) throw error;
   } catch (e) {
     console.error("Error syncing session:", e);
   }
@@ -228,8 +227,28 @@ export async function getActiveSessionsFromSupabase(
   userId: number
 ): Promise<RevisionSession[]> {
   try {
-    const res = await apiFetch<{ data: RevisionSession[] }>(`/api/revision?userId=${userId}`);
-    return res.data;
+    const { data, error } = await supabase
+      .from("revision_sesiones")
+      .select("*")
+      .eq("estatus", "activa")
+      .eq("id_usuario", userId)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      mode: "responsable" as const,
+      target: {
+        responsableId: row.responsable_id ?? undefined,
+        responsableNombre: row.responsable_nombre ?? undefined,
+        responsableTipo: row.responsable_tipo ?? undefined,
+      },
+      expected: row.expected ?? [],
+      scans: row.scans ?? [],
+      notes: row.notes ?? undefined,
+      createdAt: row.created_at,
+    }));
   } catch (e) {
     console.error("Error fetching sessions:", e);
     return [];
@@ -238,8 +257,31 @@ export async function getActiveSessionsFromSupabase(
 
 export async function finalizeSessionInSupabase(sessionId: string): Promise<void> {
   try {
-    await apiFetch(`/api/revision/${sessionId}/finalizar`, { method: "PATCH" });
+    const { error } = await supabase.from("revision_sesiones").update({ estatus: "finalizada" }).eq("id", sessionId);
+    if (error) throw error;
   } catch (e) {
     console.error("Error finalizing session:", e);
   }
+}
+
+export interface ActivoInfoRow {
+  numero_inventario: string;
+  descripcion: string | null;
+  marca: string | null;
+  modelo: string | null;
+  numero_serie: string | null;
+  ultimo_nomina: string | null;
+}
+
+export async function getActivosInfo(numeros: string[]): Promise<ActivoInfoRow[]> {
+  if (numeros.length === 0) return [];
+  const { data, error } = await supabase
+    .from("activos")
+    .select("numero_inventario, descripcion, marca, modelo, numero_serie, ultimo_nomina")
+    .in("numero_inventario", numeros);
+  if (error) {
+    console.error("Error fetching activos info:", error);
+    return [];
+  }
+  return data || [];
 }

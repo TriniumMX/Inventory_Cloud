@@ -1,5 +1,6 @@
+import bcrypt from "bcryptjs";
 import type { UsuarioAuth } from "./types";
-import { API_URL, apiFetch } from "./apiClient";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginCredentials {
   usuario: string;
@@ -13,21 +14,18 @@ interface LoginResponse {
   permisos: 1 | 2 | 3;
   modulosPermitidos?: { clave: string; puedeEditar: boolean }[];
   token?: string;
+  error?: string;
 }
 
 export async function login(credentials: LoginCredentials): Promise<{ user: UsuarioAuth }> {
-  const response = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
+  const { data, error } = await supabase.functions.invoke<LoginResponse>("auth-login", {
+    body: credentials,
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || "Usuario o contraseña incorrectos");
+  if (error || !data || data.error) {
+    throw new Error(data?.error || "Usuario o contraseña incorrectos");
   }
 
-  const data: LoginResponse = await response.json();
   const user: UsuarioAuth = {
     id: data.id,
     nombre: data.nombre,
@@ -48,16 +46,15 @@ export async function me(): Promise<UsuarioAuth | null> {
     const user = JSON.parse(stored) as UsuarioAuth;
     if (!user.token) return null;
 
-    const response = await fetch(`${API_URL}/api/auth/me`, {
+    const { data, error } = await supabase.functions.invoke<LoginResponse>("auth-me", {
       headers: { Authorization: `Bearer ${user.token}` },
     });
 
-    if (!response.ok) {
+    if (error || !data || data.error) {
       localStorage.removeItem("auth:user");
       return null;
     }
 
-    const data: LoginResponse = await response.json();
     return {
       id: data.id,
       nombre: data.nombre,
@@ -91,8 +88,31 @@ export function evaluarSeguridadPassword(password: string): { nivel: "debil" | "
 }
 
 export async function changePassword(passwordActual: string, passwordNueva: string): Promise<{ message: string }> {
-  return apiFetch<{ message: string }>("/api/auth/change-password", {
-    method: "POST",
-    body: JSON.stringify({ passwordActual, passwordNueva }),
-  });
+  const stored = localStorage.getItem("auth:user");
+  if (!stored) throw new Error("No autenticado");
+  const user = JSON.parse(stored) as UsuarioAuth;
+
+  const { data: row, error: fetchError } = await supabase
+    .from("usuarios")
+    .select("password_hash, password")
+    .eq("id_usuario", user.id)
+    .maybeSingle();
+
+  if (fetchError || !row) throw new Error("Usuario no encontrado");
+
+  const valid = row.password_hash
+    ? await bcrypt.compare(passwordActual, row.password_hash)
+    : row.password === passwordActual;
+
+  if (!valid) throw new Error("La contraseña actual es incorrecta");
+
+  const newHash = await bcrypt.hash(passwordNueva, 10);
+  const { error: updateError } = await supabase
+    .from("usuarios")
+    .update({ password_hash: newHash, password: null })
+    .eq("id_usuario", user.id);
+
+  if (updateError) throw new Error("Error al actualizar la contraseña");
+
+  return { message: "Contraseña cambiada exitosamente" };
 }

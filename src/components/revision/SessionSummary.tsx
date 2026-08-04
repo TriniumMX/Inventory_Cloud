@@ -5,9 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Download, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RevisionSession } from "@/lib/revisionStore";
-import { analyzeSession } from "@/lib/revisionStore";
+import { analyzeSession, getActivosInfo } from "@/lib/revisionStore";
 import { exportarResguardoPDF, exportarActaIncidenciasPDF, getNombreArchivoResguardo } from "@/lib/exportResguardo";
-import { apiFetch } from "@/lib/apiClient";
 
 interface SessionSummaryProps {
   session: RevisionSession;
@@ -48,12 +47,10 @@ export function SessionSummary({ session }: SessionSummaryProps) {
       }
 
       try {
-        const res = await apiFetch<{ data: { numero_inventario: string; descripcion: string | null; marca: string | null; modelo: string | null; numero_serie: string | null; ultimo_nomina: string | null }[] }>(
-          `/api/revision/activos-info?nums=${allInvs.map(encodeURIComponent).join(",")}`
-        );
+        const items = await getActivosInfo(allInvs);
 
         const infoMap = new Map<string, ActivoInfo>();
-        (res.data || []).forEach((item) => {
+        items.forEach((item) => {
           if (item.numero_inventario) {
             infoMap.set(item.numero_inventario, {
               numeroInventario: item.numero_inventario,

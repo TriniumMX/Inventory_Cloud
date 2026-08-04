@@ -56,7 +56,7 @@ export default function Configuracion() {
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
                     {section.title === "Base de Datos" && (
-                      <>API URL: {import.meta.env.VITE_API_URL}</>
+                      <>Supabase: {import.meta.env.VITE_SUPABASE_URL}</>
                     )}
                   </p>
                 </CardContent>
