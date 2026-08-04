@@ -1,0 +1,1 @@
+UPDATE usuarios SET usuario = 'Isra' WHERE id_usuario = 1;

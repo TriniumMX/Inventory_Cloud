@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "ctaContable": "1241-001",
+      "descripcion": "Mobiliario y Equipo de Oficina",
+      "tipo": "ACTIVO_FIJO"
+    },
+    {
+      "id": "2",
+      "ctaContable": "1241-002",
+      "descripcion": "Equipo de Cómputo",
+      "tipo": "ACTIVO_FIJO"
+    },
+    {
+      "id": "3",
+      "ctaContable": "1241-003",
+      "descripcion": "Equipo de Oficina",
+      "tipo": "ACTIVO_FIJO"
+    },
+    {
+      "id": "4",
+      "ctaContable": "1243-001",
+      "descripcion": "Vehículos y Equipo de Transporte",
+      "tipo": "ACTIVO_FIJO"
+    },
+    {
+      "id": "5",
+      "ctaContable": "1245-001",
+      "descripcion": "Herramientas y Máquinas",
+      "tipo": "ACTIVO_FIJO"
+    }
+  ],
+  "total": 5
+}

@@ -1,0 +1,30 @@
+{
+  "name": "Inventory Cloud",
+  "short_name": "Inventory",
+  "description": "Sistema de gestión de inventarios municipales - Municipio de San Juan del Río",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1f4e",
+  "theme_color": "#0d1f4e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

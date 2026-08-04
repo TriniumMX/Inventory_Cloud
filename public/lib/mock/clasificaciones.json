@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "codigo": "MOB",
+      "nombre": "Mobiliario",
+      "descripcion": "Muebles y enseres de oficina"
+    },
+    {
+      "id": "2",
+      "codigo": "COMP",
+      "nombre": "Equipo de Cómputo",
+      "descripcion": "Computadoras, laptops y periféricos"
+    },
+    {
+      "id": "3",
+      "codigo": "VEH",
+      "nombre": "Vehículos",
+      "descripcion": "Vehículos terrestres automotores"
+    },
+    {
+      "id": "4",
+      "codigo": "OFIC",
+      "nombre": "Equipo de Oficina",
+      "descripcion": "Equipamiento general de oficina"
+    },
+    {
+      "id": "5",
+      "codigo": "HERR",
+      "nombre": "Herramientas",
+      "descripcion": "Herramientas y equipos menores"
+    }
+  ],
+  "total": 5
+}

@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 220 9% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 25%;
+
+    --primary: 221 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 190 100% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 20% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 190 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%;
+    --input: 210 20% 90%;
+    --ring: 221 83% 58%;
+
+    --radius: 0.5rem;
+
+    /* Gradients inspired by logo */
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 58%), hsl(190 100% 50%));
+    --gradient-accent: linear-gradient(180deg, hsl(221 83% 58%), hsl(190 90% 55%));
+
+    --sidebar-background: 215 30% 12%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 221 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 35% 18%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 30% 20%;
+    --sidebar-ring: 190 100% 50%;
+  }
+
+  .dark {
+    --background: 215 30% 8%;
+    --foreground: 220 13% 91%;
+
+    --card: 215 28% 12%;
+    --card-foreground: 220 13% 91%;
+
+    --popover: 215 28% 12%;
+    --popover-foreground: 220 13% 91%;
+
+    --primary: 221 83% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 190 100% 55%;
+    --secondary-foreground: 215 30% 10%;
+
+    --muted: 215 25% 18%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 190 90% 60%;
+    --accent-foreground: 215 30% 10%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 25% 20%;
+    --input: 215 25% 18%;
+    --ring: 190 100% 55%;
+    
+    /* Gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 65%), hsl(190 100% 55%));
+    --gradient-accent: linear-gradient(180deg, hsl(221 83% 65%), hsl(190 90% 60%));
+
+    --sidebar-background: 215 30% 10%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 221 83% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 30% 16%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 215 30% 18%;
+    --sidebar-ring: 190 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Safe areas para iOS y Android */
+.safe-areas {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/*
+  ANTI-ZOOM: iOS Safari y Android Chrome hacen zoom automático cuando
+  font-size < 16px al enfocar un input/textarea/select.
+
+  Esta regla está FUERA de @layer a propósito — el CSS no-layered tiene
+  mayor prioridad que cualquier @layer (base, components, utilities),
+  por lo que gana incluso a las clases text-sm / text-xs de Tailwind.
+  max(16px, 1em) asegura que si el diseño pedía un tamaño mayor, lo respeta.
+*/
+input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select {
+  font-size: max(16px, 1em) !important;
+}
+
+/* Custom premium scrollbar for sidebar and other dark containers */
+.custom-scrollbar::-webkit-scrollbar,
+[data-sidebar] *::-webkit-scrollbar,
+[data-sidebar]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+[data-sidebar] *::-webkit-scrollbar-track,
+[data-sidebar]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+[data-sidebar] *::-webkit-scrollbar-thumb,
+[data-sidebar]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-sidebar] *::-webkit-scrollbar-thumb:hover,
+[data-sidebar]::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.custom-scrollbar,
+[data-sidebar] *,
+[data-sidebar] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+

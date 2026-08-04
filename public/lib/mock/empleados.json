@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "nomina": "EMP001",
+      "nombre": "Juan Pérez García",
+      "departamento": "Recursos Humanos",
+      "puesto": "Coordinador"
+    },
+    {
+      "nomina": "EMP002",
+      "nombre": "María López Hernández",
+      "departamento": "Sistemas",
+      "puesto": "Analista de TI"
+    },
+    {
+      "nomina": "EMP003",
+      "nombre": "Carlos Ramírez Torres",
+      "departamento": "Administración",
+      "puesto": "Asistente Administrativo"
+    },
+    {
+      "nomina": "EMP004",
+      "nombre": "Ana Martínez Silva",
+      "departamento": "Finanzas",
+      "puesto": "Contador"
+    }
+  ],
+  "total": 4
+}

@@ -1,0 +1,42 @@
+{
+  "items": [
+    {
+      "id": "ENS-001",
+      "codigo": "ENS-2024-045",
+      "descripcion": "Teléfono IP Cisco",
+      "area": "Dirección General",
+      "estatus": "Activo"
+    },
+    {
+      "id": "ENS-002",
+      "codigo": "ENS-2024-078",
+      "descripcion": "Ventilador de pedestal",
+      "area": "Sala de Juntas",
+      "estatus": "Activo"
+    },
+    {
+      "id": "ENS-003",
+      "codigo": "ENS-2023-156",
+      "descripcion": "Cafetera industrial",
+      "area": "Comedor de Empleados",
+      "estatus": "En Almacen"
+    },
+    {
+      "id": "ENS-004",
+      "codigo": "ENS-2024-092",
+      "descripcion": "Proyector multimedia Epson",
+      "area": "Sala de Capacitación",
+      "estatus": "Activo"
+    },
+    {
+      "id": "ENS-005",
+      "codigo": "ENS-2024-103",
+      "descripcion": "Pizarrón interactivo Smart Board",
+      "area": "Sala de Juntas Principal",
+      "estatus": "Activo"
+    }
+  ],
+  "total": 5,
+  "page": 1,
+  "pageSize": 10
+}

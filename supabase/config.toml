@@ -1,0 +1,10 @@
+project_id = "twfipfclshacxnuxiiku"
+
+[functions.auth-login]
+verify_jwt = false
+
+[functions.auth-me]
+verify_jwt = false
+
+[functions.get-empleado]
+verify_jwt = false

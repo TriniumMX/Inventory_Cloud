@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "nombre": "Instituto Tecnológico Superior",
+      "direccion": "Av. Tecnológico 123, Col. Industrial",
+      "responsable": "Ing. María González",
+      "telefono": "555-1234",
+      "email": "contacto@its.edu.mx"
+    },
+    {
+      "id": 2,
+      "nombre": "Centro de Salud Municipal",
+      "direccion": "Calle Salud 456, Centro",
+      "responsable": "Dr. Carlos Ramírez",
+      "telefono": "555-5678",
+      "email": "info@saludmunicipal.gob.mx"
+    },
+    {
+      "id": 3,
+      "nombre": "Biblioteca Pública Central",
+      "direccion": "Plaza Principal s/n",
+      "responsable": "Lic. Ana Torres",
+      "telefono": "555-9012",
+      "email": "biblioteca@cultura.gob.mx"
+    },
+    {
+      "id": 4,
+      "nombre": "Casa de la Cultura",
+      "direccion": "Av. Juárez 789, Centro Histórico",
+      "responsable": "Mtro. Luis Hernández",
+      "telefono": "555-3456",
+      "email": "casacultura@gobierno.mx"
+    }
+  ],
+  "total": 4
+}

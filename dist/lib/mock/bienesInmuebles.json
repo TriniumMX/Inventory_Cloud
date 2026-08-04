@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "id": "BI-001",
+      "direccion": "Av. Juárez 123, Centro",
+      "tipo": "Edificio Administrativo",
+      "escritura": "ESC-2015-042",
+      "propietario": "Municipio de San Juan del Río",
+      "superficie": "2,500 m²"
+    },
+    {
+      "id": "BI-002",
+      "direccion": "Calle Hidalgo 456, Col. Norte",
+      "tipo": "Centro Comunitario",
+      "escritura": "ESC-2018-089",
+      "propietario": "Municipio de San Juan del Río",
+      "superficie": "800 m²"
+    },
+    {
+      "id": "BI-003",
+      "direccion": "Carr. Estatal Km 5, Zona Industrial",
+      "tipo": "Bodega",
+      "escritura": "ESC-2020-125",
+      "propietario": "Municipio de San Juan del Río",
+      "superficie": "1,200 m²"
+    },
+    {
+      "id": "BI-004",
+      "direccion": "Av. Independencia 789, Centro",
+      "tipo": "Mercado Municipal",
+      "escritura": "ESC-2010-033",
+      "propietario": "Municipio de San Juan del Río",
+      "superficie": "3,000 m²"
+    }
+  ],
+  "total": 4,
+  "page": 1,
+  "pageSize": 10
+}

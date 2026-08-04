@@ -1,0 +1,29 @@
+[
+  {
+    "id_usuario": 1,
+    "nombre": "Admin",
+    "usuario": "admin",
+    "password": "admin123",
+    "password_hash": null,
+    "administrador": 1,
+    "permisos": 1
+  },
+  {
+    "id_usuario": 2,
+    "nombre": "Editor",
+    "usuario": "editor",
+    "password": "editor123",
+    "password_hash": null,
+    "administrador": 0,
+    "permisos": 2
+  },
+  {
+    "id_usuario": 3,
+    "nombre": "Consulta",
+    "usuario": "consulta",
+    "password": "consulta123",
+    "password_hash": null,
+    "administrador": 0,
+    "permisos": 3
+  }
+]
