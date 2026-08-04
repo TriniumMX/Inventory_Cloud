@@ -8,7 +8,11 @@ export async function buscarEmpleado(nomina: string): Promise<ApiResponse<any>> 
 }
 
 export async function listConsignas(): Promise<ApiResponse<{ items: any[] }>> {
-  const { data, error } = await supabase.from("consignas").select("*").order("id_consigna");
+  const { data, error } = await supabase
+    .from("consignas")
+    .select("*")
+    .eq("estatus", 1)
+    .order("id_consigna");
   if (error) throw new Error(error.message);
   return { data: { items: (data || []).map((r: any) => ({ id: r.id_consigna, nombre: r.consigna })) } };
 }
