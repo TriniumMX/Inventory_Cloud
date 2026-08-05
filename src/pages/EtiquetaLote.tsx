@@ -284,12 +284,14 @@ const EtiquetaLote = () => {
             padding: 0 !important;
           }
 
+          /* Nota: NO fijar height/overflow:hidden aquí — con varias etiquetas
+             el contenido debe fluir a través de varias páginas físicas
+             (una por etiqueta); una altura fija a 25mm con overflow oculto
+             recorta todas las etiquetas después de la primera. */
           html, body {
             width: 50mm !important;
-            height: 25mm !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }

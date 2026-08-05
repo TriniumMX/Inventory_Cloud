@@ -19,6 +19,8 @@ interface Label50x25Props {
   showBarcodeText?: boolean;
   isDemo?: boolean;
   printMode?: boolean; // Solo renderiza el canvas sin UI
+  /** Vista previa embebida (ej. dentro de otro modal): sin botones propios ni atajos de teclado. */
+  hideControls?: boolean;
 }
 
 export function Label50x25({
@@ -32,6 +34,7 @@ export function Label50x25({
   showBarcodeText = true,
   isDemo = false,
   printMode = false,
+  hideControls = false,
 }: Label50x25Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRendered, setIsRendered] = useState(false);
@@ -137,10 +140,10 @@ export function Label50x25({
     }
   }, [inventoryCode, orgName, logoUrl, descripcion, numeroSerie, dpi, showQr, showBarcodeText, width, height, printMode]);
 
-  // Handle keyboard shortcuts (only in non-print mode)
+  // Handle keyboard shortcuts (only in the standalone print-tab UI, not previews embedded in other modals)
   useEffect(() => {
-    if (printMode) return;
-    
+    if (printMode || hideControls) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
         handlePrint();
@@ -151,7 +154,7 @@ export function Label50x25({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [printMode]);
+  }, [printMode, hideControls]);
 
   const handlePrint = () => {
     window.print();
@@ -170,6 +173,21 @@ export function Label50x25({
           width: "50mm",
           height: "25mm",
           display: "block",
+        }}
+      />
+    );
+  }
+
+  // Vista previa embebida en otro modal: solo el canvas, sin botones propios
+  // ni atajos de teclado (evita que Escape cierre la pestaña completa).
+  if (hideControls) {
+    return (
+      <canvas
+        ref={canvasRef}
+        className="border border-border rounded"
+        style={{
+          width: "50mm",
+          height: "25mm",
         }}
       />
     );
@@ -214,23 +232,43 @@ export function Label50x25({
             margin: 0;
           }
 
-          body {
-            margin: 0;
-            padding: 0;
+          html, body {
+            width: 50mm !important;
+            height: 25mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Ocultar todo excepto la etiqueta: sin esto, el contenedor
+             centrado (min-h-screen) de la pantalla deja espacio en blanco
+             de sobra y la vista previa de impresión sale mal. */
+          body * {
+            visibility: hidden !important;
+          }
+
+          .label-container,
+          .label-container * {
+            visibility: visible !important;
           }
 
           .label-container {
-            width: 50mm;
-            height: 25mm;
-            margin: 0;
-            padding: 0;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 50mm !important;
+            height: 25mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
             page-break-after: always;
           }
 
           canvas {
             width: 50mm !important;
             height: 25mm !important;
-            display: block;
+            display: block !important;
+            border: none !important;
           }
         }
       `}</style>

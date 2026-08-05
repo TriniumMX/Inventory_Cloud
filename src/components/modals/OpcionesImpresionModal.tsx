@@ -204,6 +204,7 @@ export function OpcionesImpresionModal({
                   showQr={preferences.showQr}
                   showBarcodeText={preferences.showBarcodeText}
                   isDemo={isDemo}
+                  hideControls
                 />
               </div>
             </div>
