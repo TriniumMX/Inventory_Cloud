@@ -16,6 +16,7 @@ import {
   UserX,
   KeyRound,
   Lock,
+  IdCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -62,8 +63,9 @@ const ALL_MENU_GROUPS = [
     label: "SISTEMA",
     items: [
       { title: "Usuarios",      url: "/usuarios",      icon: Users,         clave: "usuarios" },
+      { title: "Empleados",     url: "/empleados",     icon: IdCard,        clave: "empleados" },
       { title: "Bitácora",      url: "/auditoria",     icon: ClipboardList, clave: "auditoria" },
-      { title: "Configuración", url: "/configuracion", icon: Settings,      clave: "configuracion" },
+  //  { title: "Configuración", url: "/configuracion", icon: Settings,      clave: "configuracion" },
       { title: "Permisos",      url: "/permisos",      icon: KeyRound,      clave: "permisos" },
     ],
   },

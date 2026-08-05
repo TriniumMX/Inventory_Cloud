@@ -40,6 +40,9 @@ server/ecosystem.config.cjs
 # Respaldos de migración (JSONs grandes, solo para uso local)
 server/backups/
 
+# Caché local del Supabase CLI
+supabase/.temp/
+
 .lovable
 .agents
 .claude

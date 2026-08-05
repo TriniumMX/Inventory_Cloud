@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "./supabaseAudit";
 import type { Empleado } from "./types";
+import type { EmpleadoCreateDto, EmpleadoUpdateDto } from "./schemasEmpleados";
 
 export type { Empleado };
 
@@ -43,6 +45,102 @@ export async function getAllEmployees(): Promise<Empleado[]> {
 
   if (error) return [];
   return (data || []) as Empleado[];
+}
+
+export async function listEmpleados(
+  params: { q?: string } = {}
+): Promise<{ items: Empleado[]; total: number }> {
+  const term = (params.q || "").trim();
+
+  let query = db
+    .from("empleados")
+    .select("nomina, nombre, departamento, puesto, activo", { count: "exact" });
+
+  if (term) {
+    query = query.or(
+      `nomina.ilike.%${term}%,nombre.ilike.%${term}%,departamento.ilike.%${term}%,puesto.ilike.%${term}%`
+    );
+  }
+
+  const { data, error, count } = await query.order("nombre").range(0, 9999);
+  if (error) throw new Error(error.message);
+
+  const items = (data || []) as Empleado[];
+  return { items, total: count ?? items.length };
+}
+
+export async function createEmpleado(dto: EmpleadoCreateDto): Promise<Empleado> {
+  const { data: existing } = await db
+    .from("empleados")
+    .select("nomina")
+    .eq("nomina", dto.nomina)
+    .maybeSingle();
+  if (existing) throw new Error("Ya existe un empleado con esa nómina");
+
+  const { data, error } = await db
+    .from("empleados")
+    .insert({
+      nomina: dto.nomina,
+      nombre: dto.nombre,
+      departamento: dto.departamento || null,
+      puesto: dto.puesto || null,
+      activo: dto.activo,
+    })
+    .select("nomina, nombre, departamento, puesto, activo")
+    .single();
+  if (error) throw new Error(error.message);
+
+  logAuditEvent("empleados", dto.nomina, "CREATE", null, null, dto.nombre);
+
+  return data as Empleado;
+}
+
+export async function updateEmpleado(nomina: string, dto: EmpleadoUpdateDto): Promise<Empleado> {
+  const { data: prev } = await db
+    .from("empleados")
+    .select("nombre, departamento, puesto, activo")
+    .eq("nomina", nomina)
+    .maybeSingle();
+
+  const update: Record<string, unknown> = {};
+  if (dto.nombre !== undefined) update.nombre = dto.nombre;
+  if (dto.departamento !== undefined) update.departamento = dto.departamento || null;
+  if (dto.puesto !== undefined) update.puesto = dto.puesto || null;
+  if (dto.activo !== undefined) update.activo = dto.activo;
+  if (Object.keys(update).length === 0) throw new Error("Sin campos para actualizar");
+
+  const { data, error } = await db
+    .from("empleados")
+    .update(update)
+    .eq("nomina", nomina)
+    .select("nomina, nombre, departamento, puesto, activo")
+    .single();
+  if (error) throw new Error(error.message);
+
+  if (prev) {
+    const fields: Array<keyof typeof update & keyof typeof prev> = [
+      "nombre",
+      "departamento",
+      "puesto",
+      "activo",
+    ];
+    for (const field of fields) {
+      if (update[field] === undefined) continue;
+      const prevVal = prev[field] != null ? String(prev[field]) : null;
+      const newVal = update[field] != null ? String(update[field]) : null;
+      if (prevVal !== newVal) logAuditEvent("empleados", nomina, "UPDATE", field, prevVal, newVal);
+    }
+  }
+
+  return data as Empleado;
+}
+
+export async function deleteEmpleado(nomina: string): Promise<void> {
+  const { data: prev } = await db.from("empleados").select("nombre").eq("nomina", nomina).maybeSingle();
+  const { error } = await db.from("empleados").delete().eq("nomina", nomina);
+  if (error) throw new Error(error.message);
+
+  logAuditEvent("empleados", nomina, "DELETE", null, prev?.nombre || "", null);
 }
 
 export async function getEmpleadosBaja(): Promise<EmpleadoBajaItem[]> {

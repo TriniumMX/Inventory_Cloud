@@ -13,6 +13,7 @@ import RevisionSesion from "@/pages/RevisionSesion";
 import Reportes from "@/pages/Reportes";
 import Configuracion from "@/pages/Configuracion";
 import Usuarios from "@/pages/Usuarios";
+import Empleados from "@/pages/Empleados";
 import Styleguide from "@/pages/Styleguide";
 import PreBaja from "@/pages/PreBaja";
 import Almacen from "@/pages/Almacen";
@@ -46,6 +47,7 @@ export function AppLayout() {
             <Route path="/reportes" element={<Reportes />} />
             <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/empleados" element={<Empleados />} />
             <Route path="/auditoria" element={<Auditoria />} />
             <Route path="/permisos" element={<Permisos />} />
             <Route path="/cambiar-password" element={<CambiarPassword />} />
