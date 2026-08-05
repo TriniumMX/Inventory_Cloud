@@ -2,11 +2,20 @@ import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Download, FileSpreadsheet, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RevisionSession } from "@/lib/revisionStore";
 import { analyzeSession, getActivosInfo } from "@/lib/revisionStore";
-import { exportarResguardoPDF, exportarActaIncidenciasPDF, getNombreArchivoResguardo } from "@/lib/exportResguardo";
+import {
+  exportarResguardoPDF,
+  exportarActaIncidenciasPDF,
+  getNombreArchivoResguardo,
+  exportarRevisionExcel,
+  getRevisionExcelSheetParams,
+  getNombreArchivoRevisionExcel,
+} from "@/lib/exportResguardo";
+import { ExcelPreviewDialog } from "@/components/shared/ExcelPreviewDialog";
+import type { BuildSheetParams } from "@/lib/excelStyle";
 
 interface SessionSummaryProps {
   session: RevisionSession;
@@ -29,6 +38,9 @@ export function SessionSummary({ session }: SessionSummaryProps) {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfFileName, setPdfFileName] = useState("");
+  const [excelPreviewOpen, setExcelPreviewOpen] = useState(false);
+  const [excelSheetParams, setExcelSheetParams] = useState<BuildSheetParams | null>(null);
+  const [excelFileName, setExcelFileName] = useState("");
 
   const canPrintResguardo = analysis.missing.size === 0;
 
@@ -82,63 +94,78 @@ export function SessionSummary({ session }: SessionSummaryProps) {
     return new Date().toLocaleDateString("es-MX", opciones);
   };
 
-  const exportCSV = () => {
+  const buildRevisionExcelData = () => {
+    const encontrados = Array.from(analysis.found).map((inv) => {
+      const info = activosInfo.get(inv);
+      return {
+        numeroInventario: inv,
+        descripcion: info?.descripcion || undefined,
+        marca: info?.marca || undefined,
+        modelo: info?.modelo || undefined,
+      };
+    });
+    const faltantes = Array.from(analysis.missing).map((inv) => {
+      const info = activosInfo.get(inv);
+      return { numeroInventario: inv, descripcion: info?.descripcion || undefined };
+    });
+    const extranos = Array.from(analysis.extra).map((inv) => {
+      const info = activosInfo.get(inv);
+      return {
+        numeroInventario: inv,
+        descripcion: info?.descripcion || undefined,
+        responsableActual: info?.ultimoNomina || undefined,
+      };
+    });
+
+    return {
+      responsable: {
+        nombre: session.target.responsableNombre,
+        nomina: String(session.target.responsableId),
+        tipo: (session.target.responsableTipo === "Empleado" ? "empleado" : "institucion") as
+          | "empleado"
+          | "institucion",
+      },
+      fechaRevision: formatearFecha(),
+      resumen: {
+        esperados: session.expected.length,
+        encontrados: analysis.found.size,
+        faltantes: analysis.missing.size,
+        extranos: analysis.extra.size,
+      },
+      encontrados,
+      faltantes,
+      extranos,
+    };
+  };
+
+  const handlePreviewExcel = () => {
     try {
-      const rows = [
-        ["Categoría", "Número de Inventario", "Timestamp Primera Lectura", "Conteo", "Notas"],
-      ];
-
-      const scanCounts = new Map<string, number>();
-      const firstScans = new Map<string, string>();
-      for (const scan of session.scans) {
-        scanCounts.set(scan.inv, (scanCounts.get(scan.inv) || 0) + 1);
-        if (!firstScans.has(scan.inv)) {
-          firstScans.set(scan.inv, scan.ts);
-        }
-      }
-
-      for (const inv of analysis.found) {
-        rows.push([
-          "OK",
-          inv,
-          firstScans.get(inv) || "",
-          scanCounts.get(inv)?.toString() || "1",
-          "",
-        ]);
-      }
-
-      for (const inv of analysis.missing) {
-        rows.push(["FALTANTE", inv, "", "0", ""]);
-      }
-
-      for (const inv of analysis.extra) {
-        rows.push([
-          "EXTRAÑO",
-          inv,
-          firstScans.get(inv) || "",
-          scanCounts.get(inv)?.toString() || "1",
-          "",
-        ]);
-      }
-
-      const csv = rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `revision-${session.id}-${new Date().toISOString().split("T")[0]}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-
+      const data = buildRevisionExcelData();
+      setExcelSheetParams(getRevisionExcelSheetParams(data));
+      setExcelFileName(getNombreArchivoRevisionExcel(data));
+      setExcelPreviewOpen(true);
+    } catch (error) {
+      console.error("Error preparing Excel preview:", error);
       toast({
-        title: "CSV exportado",
+        title: "Error al exportar",
+        description: "No se pudo generar la vista previa del Excel.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    try {
+      exportarRevisionExcel(buildRevisionExcelData());
+      toast({
+        title: "Excel exportado",
         description: "El archivo se ha descargado correctamente.",
       });
     } catch (error) {
-      console.error("Error exporting CSV:", error);
+      console.error("Error exporting Excel:", error);
       toast({
         title: "Error al exportar",
-        description: "No se pudo generar el archivo CSV.",
+        description: "No se pudo generar el archivo Excel.",
         variant: "destructive",
       });
     }
@@ -373,10 +400,10 @@ export function SessionSummary({ session }: SessionSummaryProps) {
             </Button>
           )}
 
-          {/* Botón secundario CSV */}
-          <Button onClick={exportCSV} variant="outline" className="w-full">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
+          {/* Botón secundario Excel */}
+          <Button onClick={handlePreviewExcel} variant="outline" className="w-full" disabled={!dataLoaded}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Exportar Excel
           </Button>
         </div>
 
@@ -401,6 +428,14 @@ export function SessionSummary({ session }: SessionSummaryProps) {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ExcelPreviewDialog
+          open={excelPreviewOpen}
+          onOpenChange={setExcelPreviewOpen}
+          fileName={excelFileName}
+          sheetParams={excelSheetParams}
+          onDownload={handleDownloadExcel}
+        />
       </CardContent>
     </Card>
   );

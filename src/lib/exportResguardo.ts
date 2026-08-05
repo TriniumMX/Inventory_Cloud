@@ -614,3 +614,62 @@ export const exportarActaIncidenciasPDF = async (data: IncidenciasData): Promise
   const blob = doc.output("blob");
   return URL.createObjectURL(blob);
 };
+
+// ============================================
+// EXCEL DE REVISIÓN FÍSICA (con diseño de marca)
+// ============================================
+
+interface RevisionExcelData extends IncidenciasData {
+  encontrados: Array<{
+    numeroInventario: string;
+    descripcion?: string;
+    marca?: string;
+    modelo?: string;
+  }>;
+}
+
+/** Prepara los parámetros de la hoja de Excel de la revisión (para descarga y vista previa). */
+export const getRevisionExcelSheetParams = (data: RevisionExcelData): BuildSheetParams => {
+  const { responsable, fechaRevision, resumen, encontrados, faltantes, extranos } = data;
+
+  const metaPartes = [
+    `Responsable: ${responsable.nombre}`,
+    responsable.tipo === 'empleado' ? `Nómina: ${responsable.nomina || 'N/A'}` : 'Tipo: Institución en Comodato',
+    `Fecha de revisión: ${fechaRevision}`,
+    `Esperados: ${resumen.esperados}`,
+    `Encontrados: ${resumen.encontrados}`,
+    `Faltantes: ${resumen.faltantes}`,
+    `Extraños: ${resumen.extranos}`,
+  ];
+
+  const rows: (string | number | null)[][] = [
+    ...encontrados.map((i) => ['OK', i.numeroInventario, i.descripcion || '', i.marca || '', i.modelo || '', '']),
+    ...faltantes.map((i) => ['FALTANTE', i.numeroInventario, i.descripcion || '', '', '', '']),
+    ...extranos.map((i) => ['EXTRAÑO', i.numeroInventario, i.descripcion || '', '', '', i.responsableActual || '']),
+  ];
+
+  return {
+    title: 'REVISIÓN FÍSICA DE BIENES PATRIMONIALES',
+    meta: metaPartes.join('  |  '),
+    headers: ['Categoría', 'No. Inventario', 'Descripción', 'Marca', 'Modelo', 'Responsable Actual'],
+    widths: [14, 18, 40, 15, 15, 25],
+    rows,
+    totalRow: [`TOTAL — ${rows.length} bienes`, '', '', '', '', ''],
+  };
+};
+
+/** Exportar la revisión física a archivo Excel (con diseño de marca) */
+export const exportarRevisionExcel = (data: RevisionExcelData): void => {
+  const ws = buildStyledSheet(getRevisionExcelSheetParams(data));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Revisión');
+
+  const identificador = data.responsable.nomina || data.responsable.nombre.replace(/\s+/g, '_');
+  XLSX.writeFile(wb, `revision_${identificador}_${formatearFechaCorta()}.xlsx`);
+};
+
+/** Nombre de archivo sugerido para el Excel de revisión */
+export const getNombreArchivoRevisionExcel = (data: RevisionExcelData): string => {
+  const identificador = data.responsable.nomina || data.responsable.nombre.replace(/\s+/g, '_');
+  return `revision_${identificador}_${formatearFechaCorta()}.xlsx`;
+};
