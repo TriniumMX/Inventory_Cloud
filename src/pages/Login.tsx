@@ -301,11 +301,13 @@ export default function Login() {
             <Popover>
               <PopoverTrigger asChild>
                 <button type="button" className="opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-300 focus:outline-none p-2 rounded-full hover:bg-slate-100/50">
-                  <Heart size={18} className="text-red-500 fill-red-500" />
+                  <Heart size={18} className="text-blue-600 fill-blue-600" />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-4 text-center rounded-2xl border-slate-100 shadow-2xl bg-white/95 backdrop-blur-md mb-2">
-                <p className="text-sm font-bold text-slate-800">Powered by Trinium</p>
+                <p className="text-sm font-bold text-slate-800 flex items-center justify-center gap-1.5">
+                  Creado con <Heart size={13} className="text-blue-600 fill-blue-600" /> por Trinium
+                </p>
                 <p className="text-xs italic text-slate-500 mt-1">"Tecnología con corazón"</p>
               </PopoverContent>
             </Popover>
