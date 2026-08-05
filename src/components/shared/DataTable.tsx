@@ -117,8 +117,8 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Listado en tarjetas — solo en pantallas angostas (móvil) */}
-      <div className="sm:hidden space-y-3">
+      {/* Listado en tarjetas — móvil y tablet (hasta lg); la tabla real solo aparece en escritorio */}
+      <div className="lg:hidden space-y-3">
         {paginatedData.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
             No se encontraron resultados
@@ -188,8 +188,8 @@ export function DataTable<T extends Record<string, any>>({
         )}
       </div>
 
-      {/* Tabla — desde sm (tablet/desktop) */}
-      <div className="hidden sm:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* Tabla — solo en escritorio (lg y superior) */}
+      <div className="hidden lg:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
