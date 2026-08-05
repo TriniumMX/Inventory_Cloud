@@ -43,7 +43,8 @@ import {
   Cell,
   PieChart,
   Pie,
-  Legend,
+  LabelList,
+  CartesianGrid,
 } from "recharts";
 import { CandlestickChart as CandlestickIcon, Tags } from "lucide-react";
 
@@ -55,6 +56,7 @@ const Index = () => {
   const [estatusDist, setEstatusDist] = useState<EstatusDistribucionItem[]>([]);
   const [topClasificaciones, setTopClasificaciones] = useState<ClasificacionTopItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredEstatus, setHoveredEstatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -85,6 +87,8 @@ const Index = () => {
     "Almacén": "#f59e0b",
     "Pre-Baja": "#fb923c",
   };
+
+  const totalEstatus = estatusDist.reduce((sum, e) => sum + e.cantidad, 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -276,7 +280,7 @@ const Index = () => {
             </CardHeader>
             <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
               {loading ? (
-                <Skeleton className="h-[220px] w-full rounded-xl" />
+                <Skeleton className="h-[280px] w-full rounded-xl" />
               ) : (
                 <CandlestickChart data={patrimonioMensual} />
               )}
@@ -300,37 +304,81 @@ const Index = () => {
             </CardHeader>
             <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
               {loading ? (
-                <Skeleton className="h-[220px] w-full rounded-xl" />
+                <Skeleton className="h-[260px] w-full rounded-xl" />
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={estatusDist}
-                      dataKey="cantidad"
-                      nameKey="estatus"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      cornerRadius={4}
-                      stroke="none"
-                    >
-                      {estatusDist.map((entry) => (
-                        <Cell key={entry.estatus} fill={ESTATUS_COLORS[entry.estatus]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: number, name: string) => [`${value.toLocaleString("es-MX")} bienes`, name]}
-                      contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600 }}
-                    />
-                    <Legend
-                      verticalAlign="bottom"
-                      height={32}
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: 11, fontWeight: 700, color: "#475569" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  <div className="relative">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={estatusDist}
+                          dataKey="cantidad"
+                          nameKey="estatus"
+                          innerRadius={62}
+                          outerRadius={92}
+                          paddingAngle={4}
+                          cornerRadius={6}
+                          stroke="none"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {estatusDist.map((entry) => (
+                            <Cell
+                              key={entry.estatus}
+                              fill={ESTATUS_COLORS[entry.estatus]}
+                              opacity={hoveredEstatus === null || hoveredEstatus === entry.estatus ? 1 : 0.35}
+                              style={{ transition: "opacity 150ms ease" }}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number, name: string) => [
+                            `${value.toLocaleString("es-MX")} bienes (${totalEstatus > 0 ? Math.round((value / totalEstatus) * 100) : 0}%)`,
+                            name,
+                          ]}
+                          contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600 }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Total al centro de la dona */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-2xl sm:text-3xl font-black text-slate-800 leading-none">
+                        {totalEstatus.toLocaleString("es-MX")}
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mt-1">
+                        Bienes
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Leyenda propia: dot + nombre + cantidad + % */}
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {estatusDist.map((item) => {
+                      const pct = totalEstatus > 0 ? Math.round((item.cantidad / totalEstatus) * 100) : 0;
+                      return (
+                        <button
+                          key={item.estatus}
+                          type="button"
+                          onMouseEnter={() => setHoveredEstatus(item.estatus)}
+                          onMouseLeave={() => setHoveredEstatus(null)}
+                          className="flex flex-col items-center gap-0.5 rounded-lg py-1.5 hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              className="h-2 w-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: ESTATUS_COLORS[item.estatus] }}
+                            />
+                            <span className="text-[10.5px] font-bold text-slate-600">{item.estatus}</span>
+                          </span>
+                          <span className="text-sm font-black text-slate-800">
+                            {item.cantidad.toLocaleString("es-MX")}
+                            <span className="text-[10px] font-bold text-slate-400 ml-1">{pct}%</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -352,16 +400,28 @@ const Index = () => {
             </CardHeader>
             <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
               {loading ? (
-                <Skeleton className="h-[240px] w-full rounded-xl" />
+                <Skeleton className="h-[260px] w-full rounded-xl" />
               ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={topClasificaciones} layout="vertical" margin={{ left: 8, right: 24 }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={topClasificaciones}
+                    layout="vertical"
+                    margin={{ left: 8, right: 36, top: 4, bottom: 4 }}
+                    barCategoryGap={14}
+                  >
+                    <defs>
+                      <linearGradient id="clasif-bar-fill" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#1d4ed8" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis type="number" hide />
                     <YAxis
                       type="category"
                       dataKey="nombre"
-                      width={140}
-                      tick={{ fontSize: 11, fontWeight: 700, fill: "#475569" }}
+                      width={148}
+                      tick={{ fontSize: 11.5, fontWeight: 700, fill: "#475569" }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -370,7 +430,14 @@ const Index = () => {
                       cursor={{ fill: "#f1f5f9" }}
                       contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600 }}
                     />
-                    <Bar dataKey="cantidad" fill="#2563eb" radius={[0, 6, 6, 0]} maxBarSize={22} />
+                    <Bar dataKey="cantidad" fill="url(#clasif-bar-fill)" radius={[0, 8, 8, 0]} maxBarSize={24}>
+                      <LabelList
+                        dataKey="cantidad"
+                        position="right"
+                        formatter={(v: number) => v.toLocaleString("es-MX")}
+                        style={{ fontSize: 11, fontWeight: 800, fill: "#1e3a8a" }}
+                      />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
