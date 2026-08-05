@@ -2,6 +2,7 @@ import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/logo.png";
+import { buildStyledSheet } from "./excelStyle";
 
 // ============= INTERFACES =============
 export interface ActivoReporte {
@@ -59,141 +60,6 @@ function truncateText(text: string | undefined, maxLength: number): string {
   return text.length > maxLength ? text.substring(0, maxLength - 3) + "..." : text;
 }
 
-// ============= EXCEL STYLE CONSTANTS =============
-const C = {
-  NAVY:       "0D1F4E",
-  BLUE:       "1E40AF",
-  BLUE_LIGHT: "DBEAFE",
-  ALT:        "F1F5F9",
-  WHITE:      "FFFFFF",
-  DARK:       "1E293B",
-  GRAY:       "475569",
-  BORDER:     "CBD5E1",
-};
-
-function cs(opts: {
-  bold?: boolean; italic?: boolean; sz?: number; color?: string; bg?: string;
-  align?: "left" | "center" | "right"; border?: boolean; wrap?: boolean; numFmt?: string;
-}): object {
-  const s: any = {};
-  if (opts.color || opts.bold || opts.sz || opts.italic) {
-    s.font = { name: "Calibri" };
-    if (opts.bold)   s.font.bold = true;
-    if (opts.italic) s.font.italic = true;
-    if (opts.sz)     s.font.sz = opts.sz;
-    if (opts.color)  s.font.color = { rgb: opts.color };
-  }
-  if (opts.bg) s.fill = { patternType: "solid", fgColor: { rgb: opts.bg } };
-  s.alignment = { horizontal: opts.align ?? "left", vertical: "center" };
-  if (opts.wrap)   s.alignment.wrapText = true;
-  if (opts.border) {
-    const b = { style: "thin", color: { rgb: C.BORDER } };
-    s.border = { top: b, bottom: b, left: b, right: b };
-  }
-  if (opts.numFmt) s.numFmt = opts.numFmt;
-  return s;
-}
-
-function buildSheet(params: {
-  title: string;
-  subtitle?: string;
-  meta: string;
-  headers: string[];
-  widths: number[];
-  rows: (string | number | null)[][];
-  currencyCols?: number[];
-  totalRow?: (string | number | null)[];
-}): any {
-  const { title, subtitle, meta, headers, widths, rows, currencyCols = [], totalRow } = params;
-  const nc = headers.length;
-  const ws: any = {};
-  let r = 0;
-
-  const fillRow = (text: string, style: object) => {
-    ws[XLSX.utils.encode_cell({ r, c: 0 })] = { v: text, t: "s", s: style };
-    for (let c = 1; c < nc; c++)
-      ws[XLSX.utils.encode_cell({ r, c })] = { v: "", t: "s", s: cs({ bg: (style as any).fill?.fgColor?.rgb }) };
-    r++;
-  };
-
-  // Institution
-  fillRow(import.meta.env.VITE_ORG_NAME || "Inventory Cloud",
-    cs({ bold: true, sz: 13, color: C.WHITE, bg: C.NAVY, align: "center" }));
-  // Title
-  fillRow(title, cs({ bold: true, sz: 11, color: C.WHITE, bg: C.BLUE, align: "center" }));
-  // Subtitle
-  if (subtitle) fillRow(subtitle, cs({ sz: 10, color: C.WHITE, bg: C.BLUE, align: "center" }));
-  // Meta
-  fillRow(meta, cs({ sz: 9, color: C.DARK, bg: C.BLUE_LIGHT, align: "center" }));
-  // Empty separator
-  for (let c = 0; c < nc; c++) ws[XLSX.utils.encode_cell({ r, c })] = { v: "", t: "s", s: cs({ bg: C.WHITE }) };
-  r++;
-
-  // Headers
-  headers.forEach((h, c) =>
-    ws[XLSX.utils.encode_cell({ r, c })] = {
-      v: h, t: "s",
-      s: cs({ bold: true, sz: 9, color: C.WHITE, bg: C.BLUE, align: "center", border: true }),
-    }
-  );
-  r++;
-
-  // Data rows
-  rows.forEach((row, ri) => {
-    const bg = ri % 2 === 1 ? C.ALT : C.WHITE;
-    row.forEach((val, c) => {
-      const isCur = currencyCols.includes(c);
-      const isNum = typeof val === "number";
-      if (isNum) {
-        ws[XLSX.utils.encode_cell({ r, c })] = {
-          v: val, t: "n",
-          s: cs({ sz: 9, bg, align: "right", border: true, numFmt: isCur ? "#,##0.00" : "#,##0.##" }),
-        };
-      } else {
-        ws[XLSX.utils.encode_cell({ r, c })] = {
-          v: val ?? "", t: "s",
-          s: cs({ sz: 9, bg, align: "left", border: true }),
-        };
-      }
-    });
-    r++;
-  });
-
-  // Totals row
-  if (totalRow) {
-    totalRow.forEach((val, c) => {
-      const isCur = currencyCols.includes(c);
-      const isNum = typeof val === "number";
-      if (isNum) {
-        ws[XLSX.utils.encode_cell({ r, c })] = {
-          v: val, t: "n",
-          s: cs({ bold: true, sz: 9, color: C.WHITE, bg: C.NAVY, align: "right", border: true, numFmt: isCur ? "#,##0.00" : undefined }),
-        };
-      } else {
-        ws[XLSX.utils.encode_cell({ r, c })] = {
-          v: val ?? "", t: "s",
-          s: cs({ bold: true, sz: 9, color: C.WHITE, bg: C.NAVY, align: "left", border: true }),
-        };
-      }
-    });
-    r++;
-  }
-
-  ws["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r - 1, c: nc - 1 } });
-  ws["!cols"] = widths.map(w => ({ wch: w }));
-  ws["!rows"] = Array.from({ length: r }, (_, i) => ({ hpx: i === 0 ? 28 : i === 1 ? 24 : 20 }));
-
-  const metaRow = subtitle ? 3 : 2;
-  ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: nc - 1 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: nc - 1 } },
-    ...(subtitle ? [{ s: { r: 2, c: 0 }, e: { r: 2, c: nc - 1 } }] : []),
-    { s: { r: metaRow, c: 0 }, e: { r: metaRow, c: nc - 1 } },
-  ];
-
-  return ws;
-}
-
 // ============= PDF HEADER HELPER =============
 function pdfHeader(doc: jsPDF, title: string, subtitle: string, total: number, pageWidth: number, margin: number): void {
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -219,7 +85,7 @@ export function exportarInventarioGeneralExcel(items: ActivoReporte[]): void {
   const total = items.reduce((s, i) => s + (i.costo || 0), 0);
   const fecha = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
 
-  const ws = buildSheet({
+  const ws = buildStyledSheet({
     title: "INVENTARIO GENERAL DE BIENES MUEBLES Y ENSERES",
     meta: `Fecha de generación: ${fecha}  |  Total de bienes: ${items.length}  |  Valor total: ${formatCurrency(total)}`,
     headers: ["No. Inventario", "Descripción", "Marca", "Modelo", "Serie", "F. Factura", "F. Alta", "Costo (MXN)", "Folio Factura", "Observaciones", "Resguardatario"],
@@ -279,7 +145,7 @@ export function exportarBienesSinAsignarExcel(items: ActivoReporte[]): void {
   const total = items.reduce((s, i) => s + (i.costo || 0), 0);
   const fecha = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
 
-  const ws = buildSheet({
+  const ws = buildStyledSheet({
     title: "BIENES MUEBLES Y ENSERES SIN RESGUARDATARIO ASIGNADO",
     meta: `Fecha de generación: ${fecha}  |  Total de bienes: ${items.length}  |  Valor total: ${formatCurrency(total)}`,
     headers: ["No. Inventario", "Descripción", "Marca", "Modelo", "Serie", "Fecha de Alta", "Costo (MXN)", "Clasificación", "Observaciones"],
@@ -336,7 +202,7 @@ export function exportarAltasPorFechaExcel(items: ActivoReporte[], fechaInicio: 
   const total = items.reduce((s, i) => s + (i.costo || 0), 0);
   const fecha = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
 
-  const ws = buildSheet({
+  const ws = buildStyledSheet({
     title: "ALTAS DE BIENES MUEBLES Y ENSERES POR FECHA",
     subtitle: `Período: ${fechaInicio} al ${fechaFin}`,
     meta: `Fecha de generación: ${fecha}  |  Total de bienes: ${items.length}  |  Valor total: ${formatCurrency(total)}`,
@@ -397,7 +263,7 @@ export function exportarInmueblesExcel(items: InmuebleReporte[]): void {
   const totalCosto = items.reduce((s, i) => s + (i.costoAdquisicion || 0), 0);
   const fecha = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
 
-  const ws = buildSheet({
+  const ws = buildStyledSheet({
     title: "INVENTARIO DE BIENES INMUEBLES",
     meta: `Fecha de generación: ${fecha}  |  Total de inmuebles: ${items.length}  |  Valor catastral total: ${formatCurrency(totalValorCatastral)}`,
     headers: [

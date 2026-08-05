@@ -24,13 +24,17 @@ import {
   Download,
   X
 } from "lucide-react";
-import { 
-  exportarResguardoExcel, 
-  exportarResguardoPDF, 
-  crearExportDataEmpleado, 
+import {
+  exportarResguardoExcel,
+  exportarResguardoPDF,
+  crearExportDataEmpleado,
   crearExportDataInstitucion,
-  getNombreArchivoResguardo 
+  getNombreArchivoResguardo,
+  getResguardoExcelSheetParams,
+  getNombreArchivoResguardoExcel,
 } from "@/lib/exportResguardo";
+import { ExcelPreviewDialog } from "@/components/shared/ExcelPreviewDialog";
+import type { BuildSheetParams } from "@/lib/excelStyle";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +89,9 @@ export default function Resguardos() {
   // PDF preview
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfFileName, setPdfFileName] = useState("");
+  const [excelPreviewOpen, setExcelPreviewOpen] = useState(false);
+  const [excelSheetParams, setExcelSheetParams] = useState<BuildSheetParams | null>(null);
+  const [excelFileName, setExcelFileName] = useState("");
 
   // Cargar consignas al inicio
   useEffect(() => {
@@ -214,16 +221,41 @@ export default function Resguardos() {
     return "";
   };
 
-  // Exportar a Excel
+  // Vista previa del Excel (el botón "Excel" ahora abre la previsualización)
   const handleExportExcel = () => {
     try {
+      let exportData;
       if (empleadoSeleccionado) {
-        const exportData = crearExportDataEmpleado(empleadoSeleccionado, bienesAsignados);
-        exportarResguardoExcel(exportData);
+        exportData = crearExportDataEmpleado(empleadoSeleccionado, bienesAsignados);
       } else if (institucionSeleccionada) {
-        const exportData = crearExportDataInstitucion(institucionSeleccionada, bienesAsignados);
-        exportarResguardoExcel(exportData);
+        exportData = crearExportDataInstitucion(institucionSeleccionada, bienesAsignados);
+      } else {
+        return;
       }
+      exportData = { ...exportData, tipoActivo: tipoInventario };
+      setExcelSheetParams(getResguardoExcelSheetParams(exportData));
+      setExcelFileName(getNombreArchivoResguardoExcel(exportData));
+      setExcelPreviewOpen(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la vista previa del Excel",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    try {
+      let exportData;
+      if (empleadoSeleccionado) {
+        exportData = crearExportDataEmpleado(empleadoSeleccionado, bienesAsignados);
+      } else if (institucionSeleccionada) {
+        exportData = crearExportDataInstitucion(institucionSeleccionada, bienesAsignados);
+      } else {
+        return;
+      }
+      exportarResguardoExcel({ ...exportData, tipoActivo: tipoInventario });
       toast({
         title: "Exportación exitosa",
         description: "El archivo Excel se ha descargado correctamente",
@@ -721,6 +753,13 @@ export default function Resguardos() {
             </div>
           </DialogContent>
         </Dialog>
+        <ExcelPreviewDialog
+          open={excelPreviewOpen}
+          onOpenChange={setExcelPreviewOpen}
+          fileName={excelFileName}
+          sheetParams={excelSheetParams}
+          onDownload={handleDownloadExcel}
+        />
       </div>
     </ProtectedPage>
   );

@@ -1,8 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { Empleado, Consigna } from './types';
 import logoImg from '@/assets/logo.png';
+import { buildStyledSheet, type BuildSheetParams } from './excelStyle';
 
 interface ActivoExport {
   numeroInventario: string;
@@ -42,50 +43,47 @@ const formatearFechaCorta = (): string => {
 };
 
 /**
- * Exportar resguardo a archivo Excel
+ * Prepara los parámetros de la hoja de Excel del resguardo (título, meta, filas…).
+ * Se usa tanto para generar el archivo descargable como para la vista previa en pantalla.
  */
-export const exportarResguardoExcel = (data: ExportData): void => {
-  const { responsable, bienes } = data;
-  
-  // Crear datos para el Excel
-  const excelData: any[][] = [
-    ['RESGUARDO DE BIENES PATRIMONIALES'],
-    [''],
-    [`Responsable: ${responsable.nombre}`],
-    [`${responsable.tipo === 'empleado' ? `Nómina: ${responsable.nomina}` : 'Tipo: Institución'}${responsable.departamento ? ` - Departamento: ${responsable.departamento}` : ''}`],
-    [`Fecha de emisión: ${formatearFecha()}`],
-    [''],
-    ['#', 'No. Inventario', 'Descripción', 'Marca', 'Modelo', 'Serie'],
-  ];
+export const getResguardoExcelSheetParams = (data: ExportData): BuildSheetParams => {
+  const { responsable, bienes, tipoActivo = 1 } = data;
+  const titulo = tipoActivo === 2 ? 'RESGUARDO DE ENSERES' : 'RESGUARDO DE BIENES PATRIMONIALES';
 
-  // Agregar bienes
-  bienes.forEach((bien, index) => {
-    excelData.push([
+  const metaPartes = [`Responsable: ${responsable.nombre}`];
+  if (responsable.tipo === 'empleado') {
+    metaPartes.push(`Nómina: ${responsable.nomina || 'N/A'}`);
+    if (responsable.departamento) metaPartes.push(`Departamento: ${responsable.departamento}`);
+    if (responsable.puesto) metaPartes.push(`Puesto: ${responsable.puesto}`);
+  } else {
+    metaPartes.push('Tipo: Institución en Comodato');
+  }
+  metaPartes.push(`Fecha de emisión: ${formatearFecha()}`);
+  metaPartes.push(`Total de bienes: ${bienes.length}`);
+
+  return {
+    title: titulo,
+    meta: metaPartes.join('  |  '),
+    headers: ['#', 'No. Inventario', 'Descripción', 'Marca', 'Modelo', 'Serie'],
+    widths: [5, 18, 40, 15, 15, 20],
+    rows: bienes.map((bien, index) => [
       index + 1,
       bien.numeroInventario || '',
       bien.descripcion || '',
       bien.marca || '',
       bien.modelo || '',
-      bien.numeroSerie || ''
-    ]);
-  });
+      bien.numeroSerie || '',
+    ]),
+    totalRow: [`TOTAL — ${bienes.length} bienes`, '', '', '', '', ''],
+  };
+};
 
-  // Agregar total
-  excelData.push(['']);
-  excelData.push([`Total de bienes: ${bienes.length}`]);
-
-  // Crear libro de Excel
-  const ws = XLSX.utils.aoa_to_sheet(excelData);
-  
-  // Ajustar anchos de columna
-  ws['!cols'] = [
-    { wch: 5 },   // #
-    { wch: 18 },  // No. Inventario
-    { wch: 40 },  // Descripción
-    { wch: 15 },  // Marca
-    { wch: 15 },  // Modelo
-    { wch: 20 },  // Serie
-  ];
+/**
+ * Exportar resguardo a archivo Excel (con diseño de marca)
+ */
+export const exportarResguardoExcel = (data: ExportData): void => {
+  const { responsable } = data;
+  const ws = buildStyledSheet(getResguardoExcelSheetParams(data));
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Resguardo');
@@ -93,6 +91,12 @@ export const exportarResguardoExcel = (data: ExportData): void => {
   // Descargar archivo
   const identificador = responsable.nomina || responsable.nombre.replace(/\s+/g, '_');
   XLSX.writeFile(wb, `resguardo_${identificador}_${formatearFechaCorta()}.xlsx`);
+};
+
+/** Nombre de archivo sugerido para el Excel del resguardo */
+export const getNombreArchivoResguardoExcel = (data: ExportData): string => {
+  const identificador = data.responsable.nomina || data.responsable.nombre.replace(/\s+/g, '_');
+  return `resguardo_${identificador}_${formatearFechaCorta()}.xlsx`;
 };
 
 /** Helper para generar nombre de archivo sugerido */
