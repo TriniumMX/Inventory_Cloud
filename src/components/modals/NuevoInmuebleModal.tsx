@@ -52,6 +52,7 @@ import { TipoInmueble, CuentaContable, Empleado } from "@/lib/types";
 import { createBienInmueble, checkNumeroInventarioInmuebleExists } from "@/lib/api";
 import { getEmployeeByNomina } from "@/lib/employees";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 
 interface NuevoInmuebleModalProps {
   open: boolean;
@@ -680,7 +681,7 @@ export function NuevoInmuebleModal({
                           <FormItem>
                             <FormLabel>Valor Catastral</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                              <CurrencyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -693,7 +694,7 @@ export function NuevoInmuebleModal({
                           <FormItem>
                             <FormLabel>Valor Comercial</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                              <CurrencyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -706,7 +707,7 @@ export function NuevoInmuebleModal({
                           <FormItem>
                             <FormLabel>Costo de Adquisición</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                              <CurrencyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

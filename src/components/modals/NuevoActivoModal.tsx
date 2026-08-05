@@ -42,6 +42,7 @@ import { Clasificacion, CuentaContable } from "@/lib/types";
 import { createActivo, checkNumeroInventarioExists } from "@/lib/api";
 import { ClasificacionCombobox } from "@/components/shared/ClasificacionCombobox";
 import { SearchableSelect } from "@/components/shared/SearchableSelect";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 
 interface NuevoActivoModalProps {
   open: boolean;
@@ -199,12 +200,10 @@ export function NuevoActivoModal({
                       <FormItem>
                         <FormLabel>Costo *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
+                          <CurrencyInput
                             value={field.value === 0 ? "" : field.value}
-                            onChange={(e) => field.onChange(e.target.value)}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
                           />
                         </FormControl>
                         <FormMessage />
