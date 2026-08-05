@@ -16,27 +16,61 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardStats, getActividadReciente, type DashboardStats, type ActividadReciente } from "@/lib/api";
+import {
+  getDashboardStats,
+  getActividadReciente,
+  getPatrimonioMensual,
+  getEstatusDistribucion,
+  getTopClasificaciones,
+  type DashboardStats,
+  type ActividadReciente,
+  type PatrimonioMensual,
+  type EstatusDistribucionItem,
+  type ClasificacionTopItem,
+} from "@/lib/api";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/contexts/AuthContext";
+import { CandlestickChart } from "@/components/shared/CandlestickChart";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  PieChart,
+  Pie,
+  Legend,
+} from "recharts";
+import { CandlestickChart as CandlestickIcon, Tags } from "lucide-react";
 
 const Index = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [actividad, setActividad] = useState<ActividadReciente[]>([]);
+  const [patrimonioMensual, setPatrimonioMensual] = useState<PatrimonioMensual[]>([]);
+  const [estatusDist, setEstatusDist] = useState<EstatusDistribucionItem[]>([]);
+  const [topClasificaciones, setTopClasificaciones] = useState<ClasificacionTopItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [statsData, actividadData] = await Promise.all([
+        const [statsData, actividadData, patrimonioData, estatusData, clasifData] = await Promise.all([
           getDashboardStats(),
-          getActividadReciente()
+          getActividadReciente(),
+          getPatrimonioMensual(6),
+          getEstatusDistribucion(),
+          getTopClasificaciones(6),
         ]);
         setStats(statsData);
         setActividad(actividadData);
+        setPatrimonioMensual(patrimonioData);
+        setEstatusDist(estatusData);
+        setTopClasificaciones(clasifData);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -45,6 +79,12 @@ const Index = () => {
     }
     loadData();
   }, []);
+
+  const ESTATUS_COLORS: Record<string, string> = {
+    "Activo": "#059669",
+    "Almacén": "#f59e0b",
+    "Pre-Baja": "#fb923c",
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -212,6 +252,127 @@ const Index = () => {
                 <div className="text-xl sm:text-3xl font-black text-slate-800 tracking-tight">
                   {formatCurrency(stats?.valorEnseres || 0)}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Gráficas */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3 relative z-10">
+          {/* Velas: valor de altas mensuales */}
+          <Card className="lg:col-span-2 border-slate-100/90 bg-white/85 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition-all duration-300 hover:shadow-[0_15px_40px_rgba(15,23,42,0.04)] hover:border-slate-200/80 overflow-hidden relative">
+            <CardHeader className="relative z-10 pb-3 sm:pb-4 border-b border-slate-50 flex flex-row items-center gap-2.5 sm:gap-3 px-3 pt-3 sm:p-6">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <CandlestickIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-lg font-black text-slate-800 tracking-tight leading-tight">
+                  Valor de Altas Mensuales
+                </CardTitle>
+                <CardDescription className="text-[10px] sm:text-xs font-semibold text-slate-500 mt-0.5">
+                  Costo de bienes dados de alta por mes (apertura/máximo/mínimo/cierre)
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
+              {loading ? (
+                <Skeleton className="h-[220px] w-full rounded-xl" />
+              ) : (
+                <CandlestickChart data={patrimonioMensual} />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Distribución por estatus */}
+          <Card className="border-slate-100/90 bg-white/85 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition-all duration-300 hover:shadow-[0_15px_40px_rgba(15,23,42,0.04)] hover:border-slate-200/80 overflow-hidden relative">
+            <CardHeader className="relative z-10 pb-3 sm:pb-4 border-b border-slate-50 flex flex-row items-center gap-2.5 sm:gap-3 px-3 pt-3 sm:p-6">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-lg font-black text-slate-800 tracking-tight leading-tight">
+                  Distribución por Estatus
+                </CardTitle>
+                <CardDescription className="text-[10px] sm:text-xs font-semibold text-slate-500 mt-0.5">
+                  Bienes muebles y enseres
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
+              {loading ? (
+                <Skeleton className="h-[220px] w-full rounded-xl" />
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={estatusDist}
+                      dataKey="cantidad"
+                      nameKey="estatus"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      cornerRadius={4}
+                      stroke="none"
+                    >
+                      {estatusDist.map((entry) => (
+                        <Cell key={entry.estatus} fill={ESTATUS_COLORS[entry.estatus]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value.toLocaleString("es-MX")} bienes`, name]}
+                      contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600 }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={32}
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: 11, fontWeight: 700, color: "#475569" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top clasificaciones */}
+          <Card className="lg:col-span-3 border-slate-100/90 bg-white/85 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition-all duration-300 hover:shadow-[0_15px_40px_rgba(15,23,42,0.04)] hover:border-slate-200/80 overflow-hidden relative">
+            <CardHeader className="relative z-10 pb-3 sm:pb-4 border-b border-slate-50 flex flex-row items-center gap-2.5 sm:gap-3 px-3 pt-3 sm:p-6">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <Tags className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-sm sm:text-lg font-black text-slate-800 tracking-tight leading-tight">
+                  Clasificaciones con Más Bienes
+                </CardTitle>
+                <CardDescription className="text-[10px] sm:text-xs font-semibold text-slate-500 mt-0.5">
+                  Top 6 categorías por cantidad de bienes registrados
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10 pt-4 sm:pt-6 px-2 sm:px-6 pb-3 sm:pb-6">
+              {loading ? (
+                <Skeleton className="h-[240px] w-full rounded-xl" />
+              ) : (
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={topClasificaciones} layout="vertical" margin={{ left: 8, right: 24 }}>
+                    <XAxis type="number" hide />
+                    <YAxis
+                      type="category"
+                      dataKey="nombre"
+                      width={140}
+                      tick={{ fontSize: 11, fontWeight: 700, fill: "#475569" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`${value.toLocaleString("es-MX")} bienes`, "Cantidad"]}
+                      cursor={{ fill: "#f1f5f9" }}
+                      contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600 }}
+                    />
+                    <Bar dataKey="cantidad" fill="#2563eb" radius={[0, 6, 6, 0]} maxBarSize={22} />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
