@@ -21,7 +21,8 @@ import { toast } from "@/hooks/use-toast";
 
 export default function Revisiones() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, canEdit: canEditModulo } = useAuth();
+  const canEdit = canEditModulo("revisiones");
   const [sessions, setSessions] = useState<RevisionSession[]>([]);
   const [loadingRemote, setLoadingRemote] = useState(false);
   const [restoredFromRemote, setRestoredFromRemote] = useState(false);
@@ -136,13 +137,15 @@ export default function Revisiones() {
                           >
                             Continuar
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteSession(s)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteSession(s)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -152,30 +155,32 @@ export default function Revisiones() {
             )}
 
             {/* Nueva revisión */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Nueva Revisión</CardTitle>
-                <CardDescription>
-                  Inicia una nueva sesión de revisión de resguardos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => navigate("/revisiones/nueva")}
-                  size="lg"
-                  className="w-full"
-                  disabled={!canCreateNewSession(user?.id)}
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Iniciar nueva revisión
-                </Button>
-                {!canCreateNewSession(user?.id) && (
-                  <p className="text-sm text-muted-foreground mt-2 text-center">
-                    Has alcanzado el máximo de 5 revisiones simultáneas. Finaliza alguna para iniciar una nueva.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            {canEdit && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nueva Revisión</CardTitle>
+                  <CardDescription>
+                    Inicia una nueva sesión de revisión de resguardos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => navigate("/revisiones/nueva")}
+                    size="lg"
+                    className="w-full"
+                    disabled={!canCreateNewSession(user?.id)}
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Iniciar nueva revisión
+                  </Button>
+                  {!canCreateNewSession(user?.id) && (
+                    <p className="text-sm text-muted-foreground mt-2 text-center">
+                      Has alcanzado el máximo de 5 revisiones simultáneas. Finaliza alguna para iniciar una nueva.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Info */}
             <div className="grid md:grid-cols-3 gap-4">

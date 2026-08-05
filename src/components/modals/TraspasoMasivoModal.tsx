@@ -53,7 +53,8 @@ export function TraspasoMasivoModal({
   onSoloConsultar,
 }: TraspasoMasivoModalProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, canEdit } = useAuth();
+  const puedeEditar = canEdit("resguardos");
 
   // Estados del formulario
   const [nominaDestino, setNominaDestino] = useState("");
@@ -280,23 +281,25 @@ export function TraspasoMasivoModal({
             >
               Solo Consultar
             </Button>
-            <Button
-              onClick={handleTraspasar}
-              disabled={!empleadoDestino || traspasando}
-              className="sm:flex-1"
-            >
-              {traspasando ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Traspasando...
-                </>
-              ) : (
-                <>
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Traspasar Todo ({bienesAsignados.length} bienes)
-                </>
-              )}
-            </Button>
+            {puedeEditar && (
+              <Button
+                onClick={handleTraspasar}
+                disabled={!empleadoDestino || traspasando}
+                className="sm:flex-1"
+              >
+                {traspasando ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Traspasando...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Traspasar Todo ({bienesAsignados.length} bienes)
+                  </>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         )}
       </DialogContent>

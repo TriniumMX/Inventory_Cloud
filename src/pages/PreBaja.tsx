@@ -13,7 +13,8 @@ import { mapSqlToActivo } from "@/lib/mappers";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedPage } from "@/components/ProtectedPage";
-import { SecureButton, useHasRole } from "@/components/SecureButton";
+import { SecureButton } from "@/components/SecureButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PreBaja() {
   const { toast } = useToast();
@@ -28,7 +29,8 @@ export default function PreBaja() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const canEdit = useHasRole(2);
+  const { canEdit: canEditModulo } = useAuth();
+  const canEdit = canEditModulo("pre-baja");
 
   const loadData = async () => {
     setLoading(true);

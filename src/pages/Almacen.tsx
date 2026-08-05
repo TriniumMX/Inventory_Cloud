@@ -20,9 +20,12 @@ import { EditarActivoModal } from "@/components/modals/EditarActivoModal";
 import { CambiarEstatusModal } from "@/components/modals/CambiarEstatusModal";
 import { Clasificacion, CuentaContable } from "@/lib/types";
 import { listClasificaciones, listCuentasContables } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Almacen() {
   const { toast } = useToast();
+  const { canEdit: canEditModulo } = useAuth();
+  const canEdit = canEditModulo("almacen");
   const [data, setData] = useState<Activo[]>([]);
   const [total, setTotal] = useState(0);
   const [totalCosto, setTotalCosto] = useState(0);
@@ -137,6 +140,10 @@ export default function Almacen() {
       label: "Acciones",
       render: (item: Activo) => (
         <div className="flex gap-1">
+          {!canEdit ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+          <>
           <Button
             size="sm"
             variant="outline"
@@ -155,6 +162,8 @@ export default function Almacen() {
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
+          </>
+          )}
         </div>
       ),
     },

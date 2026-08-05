@@ -7,7 +7,8 @@ import { Building2, MapPin, FileText, Plus, Eye, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProtectedPage } from "@/components/ProtectedPage";
-import { SecureButton, useHasRole } from "@/components/SecureButton";
+import { SecureButton } from "@/components/SecureButton";
+import { useAuth } from "@/contexts/AuthContext";
 import { NuevoInmuebleModal } from "@/components/modals/NuevoInmuebleModal";
 import { EditarInmuebleModal } from "@/components/modals/EditarInmuebleModal";
 import { DetalleInmuebleDrawer } from "@/components/modals/DetalleInmuebleDrawer";
@@ -34,7 +35,8 @@ export default function BienesInmuebles() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
 
   // Permisos
-  const canEdit = useHasRole(2);
+  const { canEdit: canEditModulo } = useAuth();
+  const canEdit = canEditModulo("bienes-inmuebles");
 
   const loadData = useCallback(async () => {
     setLoading(true);

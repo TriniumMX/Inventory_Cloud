@@ -33,7 +33,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { ClasificacionCombobox } from "@/components/shared/ClasificacionCombobox";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedPage } from "@/components/ProtectedPage";
-import { SecureButton, useHasRole } from "@/components/SecureButton";
+import { SecureButton } from "@/components/SecureButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ActivosPageProps {
   tipo: 1 | 2;
@@ -71,7 +72,8 @@ export default function ActivosPage({
   const [initialLoading, setInitialLoading] = useState(true);
   
   // Permisos
-  const canEdit = useHasRole(2);
+  const { canEdit: canEditModulo } = useAuth();
+  const canEdit = canEditModulo(moduloClave);
 
   // Modales
   const [modalNuevoOpen, setModalNuevoOpen] = useState(false);

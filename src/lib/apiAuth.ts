@@ -17,6 +17,25 @@ interface LoginResponse {
   error?: string;
 }
 
+// Los Edge Functions auth-login/auth-me no consultan usuario_modulos — lo hacemos
+// aquí directamente (SuperAdmin no necesita filas, hasModulo() ya lo bypassea).
+async function fetchModulosPermitidos(
+  userId: number,
+  permisos: number
+): Promise<{ clave: string; puedeEditar: boolean }[]> {
+  if (permisos === 1) return [];
+  const { data, error } = await (supabase as any)
+    .from("usuario_modulos")
+    .select("puede_editar, modulos(clave)")
+    .eq("id_usuario", userId)
+    .eq("puede_ver", true);
+
+  if (error || !data) return [];
+  return (data as any[])
+    .filter((r) => r.modulos?.clave)
+    .map((r) => ({ clave: r.modulos.clave, puedeEditar: !!r.puede_editar }));
+}
+
 export async function login(credentials: LoginCredentials): Promise<{ user: UsuarioAuth }> {
   const { data, error } = await supabase.functions.invoke<LoginResponse>("auth-login", {
     body: credentials,
@@ -26,13 +45,15 @@ export async function login(credentials: LoginCredentials): Promise<{ user: Usua
     throw new Error(data?.error || "Usuario o contraseña incorrectos");
   }
 
+  const modulosPermitidos = await fetchModulosPermitidos(data.id, data.permisos);
+
   const user: UsuarioAuth = {
     id: data.id,
     nombre: data.nombre,
     usuario: data.usuario,
     permisos: data.permisos,
     token: data.token,
-    modulosPermitidos: data.modulosPermitidos ?? [],
+    modulosPermitidos,
   };
 
   return { user };
@@ -55,13 +76,15 @@ export async function me(): Promise<UsuarioAuth | null> {
       return null;
     }
 
+    const modulosPermitidos = await fetchModulosPermitidos(data.id, data.permisos);
+
     return {
       id: data.id,
       nombre: data.nombre,
       usuario: data.usuario,
       permisos: data.permisos,
       token: user.token,
-      modulosPermitidos: data.modulosPermitidos ?? [],
+      modulosPermitidos,
     };
   } catch {
     localStorage.removeItem("auth:user");
