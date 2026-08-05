@@ -2,7 +2,7 @@ import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/logo.png";
-import { buildStyledSheet } from "./excelStyle";
+import { buildStyledSheet, REPORT_THEMES } from "./excelStyle";
 
 // ============= INTERFACES =============
 export interface ActivoReporte {
@@ -97,6 +97,8 @@ export function exportarInventarioGeneralExcel(items: ActivoReporte[]): void {
     ]),
     currencyCols: [7],
     totalRow: [`TOTAL — ${items.length} bienes`, "", "", "", "", "", "", total, "", "", ""],
+    themeColor: REPORT_THEMES.blue.main,
+    themeLight: REPORT_THEMES.blue.light,
   });
 
   const wb = XLSX.utils.book_new();
@@ -156,6 +158,8 @@ export function exportarBienesSinAsignarExcel(items: ActivoReporte[]): void {
     ]),
     currencyCols: [6],
     totalRow: [`TOTAL — ${items.length} bienes`, "", "", "", "", "", total, "", ""],
+    themeColor: REPORT_THEMES.orange.main,
+    themeLight: REPORT_THEMES.orange.light,
   });
 
   const wb = XLSX.utils.book_new();
@@ -214,6 +218,8 @@ export function exportarAltasPorFechaExcel(items: ActivoReporte[], fechaInicio: 
     ]),
     currencyCols: [6],
     totalRow: [`TOTAL — ${items.length} bienes`, "", "", "", "", "", total, "", ""],
+    themeColor: REPORT_THEMES.green.main,
+    themeLight: REPORT_THEMES.green.light,
   });
 
   const wb = XLSX.utils.book_new();
@@ -288,6 +294,8 @@ export function exportarInmueblesExcel(items: InmuebleReporte[]): void {
       `TOTAL — ${items.length} inmuebles`, "", "", "", "", "", "", "",
       "", "", "", "", totalValorCatastral, "", totalCosto, "",
     ],
+    themeColor: REPORT_THEMES.purple.main,
+    themeLight: REPORT_THEMES.purple.light,
   });
 
   const wb = XLSX.utils.book_new();

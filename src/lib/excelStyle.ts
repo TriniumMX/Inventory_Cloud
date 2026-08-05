@@ -53,12 +53,26 @@ export interface BuildSheetParams {
   rows: (string | number | null)[][];
   currencyCols?: number[];
   totalRow?: (string | number | null)[];
+  /** Color de tema (hex sin #) para título/encabezado — por defecto EXCEL_COLORS.BLUE. */
+  themeColor?: string;
+  /** Tinte claro del tema (hex sin #) para la fila de metadatos — por defecto EXCEL_COLORS.BLUE_LIGHT. */
+  themeLight?: string;
 }
+
+/** Colores de tema por reporte, alineados con el color de acento de su card en pantalla. */
+export const REPORT_THEMES = {
+  blue: { main: "2563EB", light: "EFF6FF" },
+  orange: { main: "EA580C", light: "FFF7ED" },
+  green: { main: "16A34A", light: "F0FDF4" },
+  purple: { main: "9333EA", light: "FAF5FF" },
+} as const;
 
 /** Construye una hoja de Excel con encabezado de marca, título, filas con bandas y fila de total. */
 export function buildStyledSheet(params: BuildSheetParams): any {
-  const { title, subtitle, meta, headers, widths, rows, currencyCols = [], totalRow } = params;
+  const { title, subtitle, meta, headers, widths, rows, currencyCols = [], totalRow, themeColor, themeLight } = params;
   const C = EXCEL_COLORS;
+  const headerColor = themeColor ?? C.BLUE;
+  const metaColor = themeLight ?? C.BLUE_LIGHT;
   const nc = headers.length;
   const ws: any = {};
   let r = 0;
@@ -76,11 +90,11 @@ export function buildStyledSheet(params: BuildSheetParams): any {
     cellStyle({ bold: true, sz: 13, color: C.WHITE, bg: C.NAVY, align: "center" })
   );
   // Title
-  fillRow(title, cellStyle({ bold: true, sz: 11, color: C.WHITE, bg: C.BLUE, align: "center" }));
+  fillRow(title, cellStyle({ bold: true, sz: 11, color: C.WHITE, bg: headerColor, align: "center" }));
   // Subtitle
-  if (subtitle) fillRow(subtitle, cellStyle({ sz: 10, color: C.WHITE, bg: C.BLUE, align: "center" }));
+  if (subtitle) fillRow(subtitle, cellStyle({ sz: 10, color: C.WHITE, bg: headerColor, align: "center" }));
   // Meta
-  fillRow(meta, cellStyle({ sz: 9, color: C.DARK, bg: C.BLUE_LIGHT, align: "center" }));
+  fillRow(meta, cellStyle({ sz: 9, color: C.DARK, bg: metaColor, align: "center" }));
   // Empty separator
   for (let c = 0; c < nc; c++) ws[XLSX.utils.encode_cell({ r, c })] = { v: "", t: "s", s: cellStyle({ bg: C.WHITE }) };
   r++;
@@ -91,7 +105,7 @@ export function buildStyledSheet(params: BuildSheetParams): any {
       (ws[XLSX.utils.encode_cell({ r, c })] = {
         v: h,
         t: "s",
-        s: cellStyle({ bold: true, sz: 9, color: C.WHITE, bg: C.BLUE, align: "center", border: true }),
+        s: cellStyle({ bold: true, sz: 9, color: C.WHITE, bg: headerColor, align: "center", border: true }),
       })
   );
   r++;

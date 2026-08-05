@@ -39,9 +39,21 @@ export function ExcelPreviewDialog({
   );
 }
 
-function ExcelPreviewTable({ title, subtitle, meta, headers, rows, currencyCols = [], totalRow }: BuildSheetParams) {
+function ExcelPreviewTable({
+  title,
+  subtitle,
+  meta,
+  headers,
+  rows,
+  currencyCols = [],
+  totalRow,
+  themeColor,
+  themeLight,
+}: BuildSheetParams) {
   const nc = headers.length;
   const orgName = import.meta.env.VITE_ORG_NAME || "Inventory Cloud";
+  const headerColor = themeColor ?? EXCEL_COLORS.BLUE;
+  const metaColor = themeLight ?? EXCEL_COLORS.BLUE_LIGHT;
 
   const currencyFmt = (v: number) =>
     v.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,7 +78,7 @@ function ExcelPreviewTable({ title, subtitle, meta, headers, rows, currencyCols 
           <td
             colSpan={nc}
             className="text-center font-bold px-2 py-2"
-            style={{ backgroundColor: `#${EXCEL_COLORS.BLUE}`, color: "#fff", fontSize: 14 }}
+            style={{ backgroundColor: `#${headerColor}`, color: "#fff", fontSize: 14 }}
           >
             {title}
           </td>
@@ -76,7 +88,7 @@ function ExcelPreviewTable({ title, subtitle, meta, headers, rows, currencyCols 
             <td
               colSpan={nc}
               className="text-center px-2 py-1.5"
-              style={{ backgroundColor: `#${EXCEL_COLORS.BLUE}`, color: "#fff", fontSize: 12 }}
+              style={{ backgroundColor: `#${headerColor}`, color: "#fff", fontSize: 12 }}
             >
               {subtitle}
             </td>
@@ -86,7 +98,7 @@ function ExcelPreviewTable({ title, subtitle, meta, headers, rows, currencyCols 
           <td
             colSpan={nc}
             className="text-center px-2 py-1.5"
-            style={{ backgroundColor: `#${EXCEL_COLORS.BLUE_LIGHT}`, color: `#${EXCEL_COLORS.DARK}`, fontSize: 11 }}
+            style={{ backgroundColor: `#${metaColor}`, color: `#${EXCEL_COLORS.DARK}`, fontSize: 11 }}
           >
             {meta}
           </td>
@@ -99,7 +111,7 @@ function ExcelPreviewTable({ title, subtitle, meta, headers, rows, currencyCols 
             <th
               key={i}
               className="text-center font-bold px-2 py-1.5 border"
-              style={{ backgroundColor: `#${EXCEL_COLORS.BLUE}`, color: "#fff", borderColor: `#${EXCEL_COLORS.BORDER}` }}
+              style={{ backgroundColor: `#${headerColor}`, color: "#fff", borderColor: `#${EXCEL_COLORS.BORDER}` }}
             >
               {h}
             </th>

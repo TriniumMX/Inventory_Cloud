@@ -37,6 +37,7 @@ interface Reporte {
   accent: string;          // Tailwind text color
   accentBg: string;        // Tailwind bg color for icon container
   accentBorder: string;    // Tailwind border color
+  accentBar: string;       // Tailwind bg color for the top accent bar (literal class, must match card's accent)
   badge?: string;
   enabled: boolean;
   needsDates?: boolean;
@@ -51,6 +52,7 @@ const reportes: Reporte[] = [
     accent: "text-blue-700",
     accentBg: "bg-blue-50",
     accentBorder: "border-blue-200",
+    accentBar: "bg-blue-600",
     enabled: true,
   },
   {
@@ -61,6 +63,7 @@ const reportes: Reporte[] = [
     accent: "text-orange-700",
     accentBg: "bg-orange-50",
     accentBorder: "border-orange-200",
+    accentBar: "bg-orange-600",
     enabled: true,
   },
   {
@@ -71,6 +74,7 @@ const reportes: Reporte[] = [
     accent: "text-green-700",
     accentBg: "bg-green-50",
     accentBorder: "border-green-200",
+    accentBar: "bg-green-600",
     badge: "Selecciona rango",
     enabled: true,
     needsDates: true,
@@ -83,6 +87,7 @@ const reportes: Reporte[] = [
     accent: "text-purple-700",
     accentBg: "bg-purple-50",
     accentBorder: "border-purple-200",
+    accentBar: "bg-purple-600",
     enabled: true,
   },
 ];
@@ -245,9 +250,7 @@ export default function Reportes() {
                   )}
                 >
                   {/* Top accent bar */}
-                  <div className={cn("h-1", rep.accentBg.replace("bg-", "bg-").replace("50", "500")
-                    .replace("blue-500", "blue-600").replace("orange-500", "orange-500")
-                    .replace("green-500", "green-600").replace("purple-500", "purple-600"))} />
+                  <div className={cn("h-1", rep.accentBar)} />
 
                   <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Header */}
