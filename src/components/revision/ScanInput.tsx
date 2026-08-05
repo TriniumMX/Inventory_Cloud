@@ -13,37 +13,55 @@ interface ScanInputProps {
   disabled?: boolean;
 }
 
+// Tiempo mínimo antes de volver a aceptar el MISMO código detectado por la
+// cámara: evita que, si la etiqueta sigue frente al lente tras un escaneo,
+// se dispare de nuevo el mismo código en el siguiente frame decodificado.
+const SAME_CODE_COOLDOWN_MS = 2000;
+// Pausa breve tras un escaneo exitoso antes de reanudar la detección: solo
+// el tiempo justo para el flash visual/sonoro, sin cerrar la cámara — así
+// el escaneo es continuo (no hay que reabrirla para cada bien).
+const RESUME_SCAN_DELAY_MS = 350;
+
 export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanInputProps) {
   const [manualInput, setManualInput] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [detected, setDetected] = useState(false);
+  const [sessionScanCount, setSessionScanCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
+  const lastCodeRef = useRef<string | null>(null);
+  const lastCodeAtRef = useRef(0);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus();
   }, [autoFocus]);
 
+  useEffect(() => {
+    return () => {
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    };
+  }, []);
+
+  // Escaneo manual / lector físico tipo "keyboard wedge": el lector escribe
+  // el código completo y termina con Enter, así que se procesa de inmediato
+  // (un debounce aquí solo agrega latencia sin ningún beneficio real).
   const handleManualScan = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (!manualInput.trim()) return;
-      const code = extractInventoryCode(manualInput);
-      if (code) {
-        const normalized = code.trim().toUpperCase().replace(/\s+/g, "");
-        onScan(normalized, "ok");
-        setManualInput("");
-        if (inputRef.current) inputRef.current.focus();
-        if (navigator.vibrate) navigator.vibrate(40);
-      }
-    }, 80);
+    if (!manualInput.trim()) return;
+    const code = extractInventoryCode(manualInput);
+    if (code) {
+      const normalized = code.trim().toUpperCase().replace(/\s+/g, "");
+      onScan(normalized, "ok");
+      setManualInput("");
+      if (inputRef.current) inputRef.current.focus();
+      if (navigator.vibrate) navigator.vibrate(40);
+    }
   }, [manualInput, onScan]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -52,10 +70,14 @@ export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanIn
 
   const startCamera = async () => {
     isProcessingRef.current = false;
+    lastCodeRef.current = null;
+    lastCodeAtRef.current = 0;
+    if (resumeTimeoutRef.current) { clearTimeout(resumeTimeoutRef.current); resumeTimeoutRef.current = null; }
     if (controlsRef.current) { controlsRef.current.stop(); controlsRef.current = null; }
     setCameraOpen(true);
     setCameraError(null);
     setDetected(false);
+    setSessionScanCount(0);
 
     try {
       const reader = new BrowserMultiFormatReader();
@@ -69,20 +91,35 @@ export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanIn
       streamRef.current = stream;
       videoRef.current.srcObject = stream;
 
+      // Escaneo continuo: la cámara permanece abierta entre lecturas — no
+      // hay que reabrirla para cada bien. Si se cerrara y reabriera por
+      // cada código (como antes), es fácil que el lente siga apuntando a
+      // la etiqueta anterior al reabrir y esta se vuelva a leer, dando la
+      // sensación de que "detectó el QR anterior".
       const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
         if (isProcessingRef.current) return;
         if (result) {
           const code = extractInventoryCode(result.getText());
           if (code) {
+            const now = Date.now();
+            const isSameRecentCode =
+              lastCodeRef.current === code && now - lastCodeAtRef.current < SAME_CODE_COOLDOWN_MS;
+            if (isSameRecentCode) return; // misma etiqueta aún frente al lente: ignorar en silencio
+
             isProcessingRef.current = true;
+            lastCodeRef.current = code;
+            lastCodeAtRef.current = now;
+
             playScanFeedback("ok");
             if (navigator.vibrate) navigator.vibrate([40, 30, 60]);
             setDetected(true);
-            setTimeout(() => {
+            onScan(code, "ok");
+            setSessionScanCount((c) => c + 1);
+
+            resumeTimeoutRef.current = setTimeout(() => {
               setDetected(false);
-              onScan(code, "ok");
-              stopCamera();
-            }, 450);
+              isProcessingRef.current = false;
+            }, RESUME_SCAN_DELAY_MS);
           }
         }
         if (error && error.name !== "NotFoundException") console.error("Scan error:", error);
@@ -107,10 +144,13 @@ export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanIn
   };
 
   const stopCamera = () => {
+    if (resumeTimeoutRef.current) { clearTimeout(resumeTimeoutRef.current); resumeTimeoutRef.current = null; }
     if (controlsRef.current) { controlsRef.current.stop(); controlsRef.current = null; }
     readerRef.current = null;
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
+    isProcessingRef.current = false;
+    lastCodeRef.current = null;
     setCameraOpen(false);
     setCameraError(null);
     setTorchEnabled(false);
@@ -257,10 +297,15 @@ export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanIn
             >
               <X className="h-5 w-5" />
             </Button>
-            <div className="bg-black/40 backdrop-blur-sm rounded-full px-4 py-1.5">
+            <div className="bg-black/40 backdrop-blur-sm rounded-full px-4 py-1.5 flex items-center gap-2">
               <span className="text-white text-sm font-semibold">
-                {detected ? "✓ Código detectado" : "Escanear código"}
+                {detected ? "✓ Código detectado" : "Escaneo continuo"}
               </span>
+              {sessionScanCount > 0 && (
+                <span className="bg-emerald-500/90 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                  {sessionScanCount}
+                </span>
+              )}
             </div>
             <Button
               onClick={toggleTorch}
@@ -287,14 +332,14 @@ export function ScanInput({ onScan, autoFocus = true, disabled = false }: ScanIn
                   ? "bg-emerald-500/80 text-white"
                   : "bg-black/50 text-white/80"
               )}>
-                {detected ? "Procesando…" : "Apunta el código QR al recuadro"}
+                {detected ? "¡Listo! Apunta al siguiente código" : "Apunta el código QR al recuadro"}
               </p>
               <Button
                 onClick={stopCamera}
                 variant="outline"
                 className="pointer-events-auto border-white/30 text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-full px-6"
               >
-                Cancelar
+                Terminar escaneo
               </Button>
             </div>
           )}
