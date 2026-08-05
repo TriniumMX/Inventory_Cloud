@@ -212,86 +212,6 @@ export default function EmpleadosBaja() {
     },
   ];
 
-  // ── Columns: asset list inside Sheet ──────────────────────────────────
-  const activoColumns = [
-    {
-      key: "numeroInventario",
-      label: "Núm. Inventario",
-      render: (item: Activo) => (
-        <span className="font-mono font-semibold text-sm">{item.numeroInventario}</span>
-      ),
-    },
-    {
-      key: "descripcion",
-      label: "Descripción",
-      render: (item: Activo) => (
-        <span className="block max-w-[200px] truncate text-sm" title={item.descripcion}>
-          {item.descripcion}
-        </span>
-      ),
-    },
-    {
-      key: "tipo",
-      label: "Tipo",
-      render: (item: Activo) =>
-        item.tipo === 1 ? (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs gap-1 border-0">
-            <Package className="h-3 w-3" /> Mueble
-          </Badge>
-        ) : item.tipo === 2 ? (
-          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs gap-1 border-0">
-            <Briefcase className="h-3 w-3" /> Enser
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground text-xs">—</span>
-        ),
-    },
-    {
-      key: "estatus",
-      label: "Estatus",
-      render: (item: Activo) => {
-        const cfg = ESTATUS_CONFIG[item.estatus];
-        return (
-          <Badge className={`text-xs border-0 ${cfg?.className ?? "bg-gray-100 text-gray-700"}`}>
-            {cfg?.label ?? item.estatus}
-          </Badge>
-        );
-      },
-    },
-    {
-      key: "costo",
-      label: "Costo",
-      render: (item: Activo) =>
-        new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(item.costo),
-    },
-    {
-      key: "acciones",
-      label: "Acciones",
-      render: (item: Activo) => (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs gap-1"
-            onClick={(e) => { e.stopPropagation(); handleAbrirReasignar(item); }}
-          >
-            <ArrowLeftRight className="h-3 w-3" />
-            Reasignar
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs gap-1"
-            onClick={(e) => { e.stopPropagation(); handleAbrirCambiarEstatus(item); }}
-          >
-            <RefreshCw className="h-3 w-3" />
-            Estatus
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   const totalBienesAfectados = empleados.reduce((s, e) => s + e.totalBienes, 0);
 
   // ── Render ─────────────────────────────────────────────────────────────
@@ -422,7 +342,7 @@ export default function EmpleadosBaja() {
                 </div>
               </div>
 
-              {/* Asset list */}
+              {/* Asset list — cards por bien para mejor legibilidad */}
               <div className="flex-1 overflow-auto p-6">
                 {loadingActivos ? (
                   <div className="flex items-center justify-center py-16">
@@ -437,11 +357,79 @@ export default function EmpleadosBaja() {
                     </p>
                   </div>
                 ) : (
-                  <DataTable
-                    data={activos}
-                    columns={activoColumns}
-                    searchable={false}
-                  />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {activos.map((item) => {
+                      const cfg = ESTATUS_CONFIG[item.estatus];
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-xl border bg-card p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-mono font-bold text-sm text-primary">{item.numeroInventario}</p>
+                              <p className="text-sm font-medium mt-0.5 break-words">{item.descripcion}</p>
+                            </div>
+                            <Badge className={`text-xs border-0 shrink-0 ${cfg?.className ?? "bg-gray-100 text-gray-700"}`}>
+                              {cfg?.label ?? item.estatus}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                            <div>
+                              <span className="text-muted-foreground">Tipo</span>
+                              <div className="mt-0.5">
+                                {item.tipo === 1 ? (
+                                  <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-[11px] gap-1 border-0">
+                                    <Package className="h-3 w-3" /> Mueble
+                                  </Badge>
+                                ) : item.tipo === 2 ? (
+                                  <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-[11px] gap-1 border-0">
+                                    <Briefcase className="h-3 w-3" /> Enser
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Costo</span>
+                              <p className="font-semibold mt-0.5">
+                                {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(item.costo)}
+                              </p>
+                            </div>
+                            {(item.marca || item.modelo) && (
+                              <div className="col-span-2">
+                                <span className="text-muted-foreground">Marca / Modelo</span>
+                                <p className="mt-0.5">{[item.marca, item.modelo].filter(Boolean).join(" · ")}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex gap-2 pt-1 border-t mt-auto">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs gap-1 flex-1"
+                              onClick={() => handleAbrirReasignar(item)}
+                            >
+                              <ArrowLeftRight className="h-3 w-3" />
+                              Reasignar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs gap-1 flex-1"
+                              onClick={() => handleAbrirCambiarEstatus(item)}
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                              Estatus
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </>
