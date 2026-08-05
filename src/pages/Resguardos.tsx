@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { NuevoResguardoWizard } from "@/components/modals/NuevoResguardoWizard";
 import { ReasignarBienModal } from "@/components/modals/ReasignarBienModal";
 import { TraspasoMasivoModal } from "@/components/modals/TraspasoMasivoModal";
@@ -553,22 +553,17 @@ export default function Resguardos() {
       {/* Selector de institución */}
       <Card>
         <CardContent className="pt-6">
-          <Select 
-            value={institucionSeleccionada?.id?.toString() || ""} 
+          <SearchableSelect
+            options={consignas.map((consigna) => ({
+              value: consigna.id.toString(),
+              label: consigna.nombre,
+            }))}
+            value={institucionSeleccionada?.id?.toString() || ""}
             onValueChange={handleSeleccionarInstitucion}
             disabled={loadingConsignas}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccione una institución..." />
-            </SelectTrigger>
-            <SelectContent>
-              {consignas.map((consigna) => (
-                <SelectItem key={consigna.id} value={consigna.id.toString()}>
-                  {consigna.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Seleccione una institución..."
+            searchPlaceholder="Buscar institución…"
+          />
         </CardContent>
       </Card>
 

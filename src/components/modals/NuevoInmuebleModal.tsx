@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TipoInmueble, CuentaContable, Empleado } from "@/lib/types";
 import { createBienInmueble, checkNumeroInventarioInmuebleExists } from "@/lib/api";
 import { getEmployeeByNomina } from "@/lib/employees";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 
 interface NuevoInmuebleModalProps {
   open: boolean;
@@ -732,20 +733,20 @@ export function NuevoInmuebleModal({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Cuenta Contable</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecciona cuenta" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {(cuentasContables || []).map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.ctaContable} — {c.descripcion}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <SearchableSelect
+                                options={(cuentasContables || []).map((c) => ({
+                                  value: c.id,
+                                  label: c.descripcion,
+                                  sublabel: c.ctaContable,
+                                  keywords: c.ctaContable,
+                                }))}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                placeholder="Selecciona cuenta"
+                                searchPlaceholder="Buscar cuenta contable…"
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { Search, User, Package, FileText, Building2 } from "lucide-react";
 import { buscarEmpleado, listActivos, createResguardo, listConsignas } from "@/lib/api";
 import { Empleado, Activo, ResguardoTarget, Consigna } from "@/lib/types";
@@ -312,18 +312,17 @@ export function NuevoResguardoWizard({
                   </Button>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Select value={selectedConsigna} onValueChange={setSelectedConsigna}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una institución" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {consignas.map((c) => (
-                          <SelectItem key={c.id} value={c.id.toString()}>
-                            {c.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      options={consignas.map((c) => ({
+                        value: c.id.toString(),
+                        label: c.nombre,
+                      }))}
+                      value={selectedConsigna}
+                      onValueChange={setSelectedConsigna}
+                      placeholder="Selecciona una institución"
+                      searchPlaceholder="Buscar institución…"
+                      triggerClassName="flex-1"
+                    />
                     <Button onClick={handleContinuarPaso1} disabled={loading || !selectedConsigna} className="sm:w-auto">
                       Continuar
                     </Button>

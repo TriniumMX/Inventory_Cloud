@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 import { ArrowLeft, Search, Loader2 } from "lucide-react";
 import { ProtectedPage } from "@/components/ProtectedPage";
 import { toast } from "@/hooks/use-toast";
@@ -211,16 +211,15 @@ export default function RevisionNueva() {
                   <div className="space-y-3">
                     <Label>Selecciona la institución</Label>
                     <div className="flex gap-2">
-                      <Select value={selectedConsigna} onValueChange={setSelectedConsigna} disabled={loadingConsignas}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder={loadingConsignas ? "Cargando instituciones..." : "Seleccionar institución..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {consignas.map((c) => (
-                            <SelectItem key={c.id} value={c.nombre}>{c.nombre}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        options={consignas.map((c) => ({ value: c.nombre, label: c.nombre }))}
+                        value={selectedConsigna}
+                        onValueChange={setSelectedConsigna}
+                        disabled={loadingConsignas}
+                        placeholder={loadingConsignas ? "Cargando instituciones..." : "Seleccionar institución..."}
+                        searchPlaceholder="Buscar institución…"
+                        triggerClassName="flex-1"
+                      />
                       <Button onClick={handleStart} disabled={loading || !selectedConsigna || loadingConsignas}>
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
                         {!loading && "Buscar"}

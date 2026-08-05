@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Clasificacion, CuentaContable } from "@/lib/types";
 import { createActivo, checkNumeroInventarioExists } from "@/lib/api";
 import { ClasificacionCombobox } from "@/components/shared/ClasificacionCombobox";
+import { SearchableSelect } from "@/components/shared/SearchableSelect";
 
 interface NuevoActivoModalProps {
   open: boolean;
@@ -364,20 +365,20 @@ export function NuevoActivoModal({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cuenta Contable *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {cuentasContables.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.ctaContable} — {c.descripcion}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <SearchableSelect
+                            options={cuentasContables.map((c) => ({
+                              value: c.id,
+                              label: c.descripcion,
+                              sublabel: c.ctaContable,
+                              keywords: c.ctaContable,
+                            }))}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Selecciona"
+                            searchPlaceholder="Buscar cuenta contable…"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
