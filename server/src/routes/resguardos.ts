@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireModulo } from "../middleware/auth";
 
 const router = Router();
 
@@ -25,7 +25,7 @@ async function auditLog(
 }
 
 // GET /api/resguardos?folio=XX
-router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/", requireAuth, requireModulo("resguardos", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { folio } = req.query as Record<string, string>;
 
@@ -63,7 +63,7 @@ router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> 
 });
 
 // POST /api/resguardos
-router.post("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/", requireAuth, requireModulo("resguardos", true), async (req: Request, res: Response): Promise<void> => {
   const client = await pool.connect();
   try {
     const { folio, nomina, numerosInventario, idUsuario } = req.body as {
@@ -111,7 +111,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
 });
 
 // POST /api/resguardos/reasignar
-router.post("/reasignar", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/reasignar", requireAuth, requireModulo("resguardos", true), async (req: Request, res: Response): Promise<void> => {
   const client = await pool.connect();
   try {
     const { numeroInventario, nuevoDestinatario, idUsuario } = req.body as {
@@ -179,7 +179,7 @@ router.post("/reasignar", requireAuth, async (req: Request, res: Response): Prom
 });
 
 // POST /api/resguardos/traspasar
-router.post("/traspasar", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/traspasar", requireAuth, requireModulo("resguardos", true), async (req: Request, res: Response): Promise<void> => {
   const client = await pool.connect();
   try {
     const { nominaOrigen, nominaDestino, idUsuario } = req.body as {
