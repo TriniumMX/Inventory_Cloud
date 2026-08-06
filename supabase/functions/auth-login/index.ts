@@ -4,12 +4,62 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = (Deno.env.get('CORS_ORIGIN') || 'https://inventory-cloud-pi.vercel.app,http://localhost:8080,http://127.0.0.1:8080')
+  .split(',')
+  .map((o) => o.trim());
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
+
+// Rate limiting contra fuerza bruta / credential stuffing. Se guarda en
+// Postgres (no en memoria del proceso) porque las Edge Functions son
+// serverless y no hay estado confiable entre invocaciones.
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+
+async function checkRateLimit(supabase: ReturnType<typeof createClient>, identifier: string) {
+  const { data } = await supabase
+    .from('auth_login_attempts')
+    .select('attempts, first_attempt_at, locked_until')
+    .eq('identifier', identifier)
+    .maybeSingle();
+
+  if (data?.locked_until && new Date(data.locked_until).getTime() > Date.now()) {
+    return { blocked: true };
+  }
+  return { blocked: false, row: data };
+}
+
+async function recordFailedAttempt(
+  supabase: ReturnType<typeof createClient>,
+  identifier: string,
+  row: { attempts: number; first_attempt_at: string } | null | undefined
+) {
+  const windowExpired = !row || Date.now() - new Date(row.first_attempt_at).getTime() > WINDOW_MS;
+  const attempts = windowExpired ? 1 : row.attempts + 1;
+  const lockedUntil = attempts >= MAX_ATTEMPTS ? new Date(Date.now() + WINDOW_MS).toISOString() : null;
+
+  await supabase.from('auth_login_attempts').upsert({
+    identifier,
+    attempts,
+    first_attempt_at: windowExpired ? new Date().toISOString() : row!.first_attempt_at,
+    locked_until: lockedUntil,
+  });
+}
+
+async function clearAttempts(supabase: ReturnType<typeof createClient>, identifier: string) {
+  await supabase.from('auth_login_attempts').delete().eq('identifier', identifier);
+}
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -31,6 +81,15 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const identifier = String(usuario).toLowerCase().trim();
+    const rateLimit = await checkRateLimit(supabase, identifier);
+    if (rateLimit.blocked) {
+      return new Response(
+        JSON.stringify({ error: "Demasiados intentos. Intenta de nuevo en unos minutos." }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Buscar usuario por nombre de usuario (case insensitive)
     const { data: usuarioData, error: fetchError } = await supabase
       .from('usuarios')
@@ -48,6 +107,7 @@ serve(async (req) => {
 
     if (!usuarioData) {
       console.log("User not found:", usuario);
+      await recordFailedAttempt(supabase, identifier, rateLimit.row);
       return new Response(
         JSON.stringify({ error: "Usuario o contraseña incorrectos" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -83,11 +143,14 @@ serve(async (req) => {
 
     if (!passwordValid) {
       console.log("Invalid password for user:", usuario);
+      await recordFailedAttempt(supabase, identifier, rateLimit.row);
       return new Response(
         JSON.stringify({ error: "Usuario o contraseña incorrectos" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    await clearAttempts(supabase, identifier);
 
     // Módulos permitidos (SuperAdmin no necesita filas, bypassea el check en el cliente)
     let modulosPermitidos: { clave: string; puedeEditar: boolean }[] = [];

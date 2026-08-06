@@ -7,7 +7,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { pool } from "./db";
-import authRouter from "./routes/auth";
 import activosRouter from "./routes/activos";
 import catalogosRouter from "./routes/catalogos";
 import inmueblesRouter from "./routes/inmuebles";
@@ -18,6 +17,7 @@ import revisionRouter from "./routes/revision";
 import empleadosRouter from "./routes/empleados";
 import auditLogsRouter from "./routes/auditLogs";
 import permisosRouter from "./routes/permisos";
+import consignasRouter from "./routes/consignas";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "5199");
@@ -40,7 +40,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Rutas ────────────────────────────────────────────────
-app.use("/api/auth", authRouter);
 app.use("/api/activos", activosRouter);
 app.use("/api/catalogos", catalogosRouter);
 app.use("/api/inmuebles", inmueblesRouter);
@@ -51,6 +50,7 @@ app.use("/api/revision", revisionRouter);
 app.use("/api/empleados", empleadosRouter);
 app.use("/api/audit-logs", auditLogsRouter);
 app.use("/api/permisos", permisosRouter);
+app.use("/api/consignas", consignasRouter);
 
 // ── Health check ─────────────────────────────────────────
 app.get("/health", (_req, res) => {
