@@ -104,8 +104,8 @@ export function DetalleInmuebleDrawer({
   }, [open, inmueble?.id]);
 
   const handleVerDocumento = async () => {
-    if (!escrituraUrl) return;
-    const url = await getEscrituraSignedUrl(escrituraUrl);
+    if (!escrituraUrl || !inmueble) return;
+    const url = await getEscrituraSignedUrl(inmueble.id);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

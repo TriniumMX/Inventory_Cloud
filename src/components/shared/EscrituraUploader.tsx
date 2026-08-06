@@ -91,10 +91,10 @@ export function EscrituraUploader({
   };
 
   const handleView = async () => {
-    if (!escrituraUrl) return;
+    if (!escrituraUrl || !inmuebleId) return;
 
     try {
-      const signedUrl = await getEscrituraSignedUrl(escrituraUrl);
+      const signedUrl = await getEscrituraSignedUrl(inmuebleId);
       window.open(signedUrl, "_blank");
     } catch (error) {
       toast({

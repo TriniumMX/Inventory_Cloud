@@ -10,6 +10,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
     "@types/mssql": "^12.3.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

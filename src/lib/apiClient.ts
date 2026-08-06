@@ -10,21 +10,24 @@ function getToken(): string | null {
   }
 }
 
-function authHeaders(): Record<string, string> {
+function authHeaders(isFormData: boolean): Record<string, string> {
   const token = getToken();
-  return token
-    ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-    : { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  // Con FormData, el navegador debe fijar Content-Type con el boundary del multipart.
+  if (!isFormData) headers["Content-Type"] = "application/json";
+  return headers;
 }
 
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      ...authHeaders(),
+      ...authHeaders(isFormData),
       ...(options.headers as Record<string, string> | undefined),
     },
   });

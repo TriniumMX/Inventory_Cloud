@@ -1,9 +1,8 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireModulo } from "../middleware/auth";
+import { supabaseAdmin } from "../supabaseAdmin";
 
 const router = Router();
 
@@ -18,16 +17,12 @@ function toAuditStr(val: unknown): string | null {
   return s;
 }
 
-// Configurar almacenamiento de archivos (PDFs de escrituras)
-const uploadsDir = path.resolve(process.env.UPLOADS_DIR || "./uploads", "escrituras");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, file.originalname),
-});
+// PDFs de escrituras: en memoria (nunca tocan disco) y se suben a Supabase
+// Storage con la service role key — el navegador nunca habla con Storage
+// directo, ni el anon key. El bucket "escrituras" queda con RLS cerrada.
+const ESCRITURAS_BUCKET = "escrituras";
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
     if (file.mimetype === "application/pdf") cb(null, true);
@@ -35,8 +30,14 @@ const upload = multer({
   },
 });
 
+// El mimetype lo declara el cliente y es falsificable — se valida además la
+// firma real del archivo (los PDF siempre empiezan con "%PDF-").
+function looksLikePdf(buf: Buffer): boolean {
+  return buf.length > 4 && buf.subarray(0, 5).toString("ascii") === "%PDF-";
+}
+
 // GET /api/inmuebles/tipos
-router.get("/tipos", requireAuth, async (_req: Request, res: Response): Promise<void> => {
+router.get("/tipos", requireAuth, requireModulo("bienes-inmuebles", false), async (_req: Request, res: Response): Promise<void> => {
   try {
     const { rows } = await pool.query("SELECT id, nombre, descripcion FROM tipos_inmueble ORDER BY nombre");
     res.json({ data: rows.map((r) => ({ id: r.id, nombre: r.nombre, descripcion: r.descripcion })) });
@@ -46,7 +47,7 @@ router.get("/tipos", requireAuth, async (_req: Request, res: Response): Promise<
 });
 
 // GET /api/inmuebles/check-inventario?numero=XX&excludeId=YY
-router.get("/check-inventario", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/check-inventario", requireAuth, requireModulo("bienes-inmuebles", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { numero, excludeId } = req.query as Record<string, string>;
     const params: unknown[] = [numero];
@@ -61,7 +62,7 @@ router.get("/check-inventario", requireAuth, async (req: Request, res: Response)
 });
 
 // GET /api/inmuebles
-router.get("/", requireAuth, async (_req: Request, res: Response): Promise<void> => {
+router.get("/", requireAuth, requireModulo("bienes-inmuebles", false), async (_req: Request, res: Response): Promise<void> => {
   try {
     const { rows } = await pool.query(
       `SELECT bi.*,
@@ -120,7 +121,7 @@ router.get("/", requireAuth, async (_req: Request, res: Response): Promise<void>
 });
 
 // POST /api/inmuebles
-router.post("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/", requireAuth, requireModulo("bienes-inmuebles", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const dto = req.body;
     const p = (v?: string) => (v && v !== "" ? parseFloat(v) : null);
@@ -162,7 +163,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
 });
 
 // PATCH /api/inmuebles/:id
-router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.patch("/:id", requireAuth, requireModulo("bienes-inmuebles", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const dto = req.body;
@@ -250,11 +251,12 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<v
   }
 });
 
-// POST /api/inmuebles/:id/escritura — subir PDF
-router.post("/:id/escritura", requireAuth, upload.single("file"), async (req: Request, res: Response): Promise<void> => {
+// POST /api/inmuebles/:id/escritura — subir PDF a Supabase Storage
+router.post("/:id/escritura", requireAuth, requireModulo("bienes-inmuebles", true), upload.single("file"), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     if (!req.file) { res.status(400).json({ error: "No se envió ningún archivo" }); return; }
+    if (!looksLikePdf(req.file.buffer)) { res.status(400).json({ error: "El archivo no es un PDF válido" }); return; }
 
     const { rows } = await pool.query("SELECT numero_inventario FROM bienes_inmuebles WHERE id = $1", [id]);
     if (!rows[0]) { res.status(404).json({ error: "Inmueble no encontrado" }); return; }
@@ -262,12 +264,10 @@ router.post("/:id/escritura", requireAuth, upload.single("file"), async (req: Re
     const safeNum = rows[0].numero_inventario.replace(/[^a-zA-Z0-9-_]/g, "_");
     const fileName = `${safeNum}-escritura.pdf`;
 
-    // Si el nombre del archivo guardado es diferente al esperado, renombrar
-    if (req.file.filename !== fileName) {
-      const oldPath = req.file.path;
-      const newPath = path.join(uploadsDir, fileName);
-      fs.renameSync(oldPath, newPath);
-    }
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(ESCRITURAS_BUCKET)
+      .upload(fileName, req.file.buffer, { upsert: true, contentType: "application/pdf" });
+    if (uploadError) { throw uploadError; }
 
     await pool.query(
       "UPDATE bienes_inmuebles SET escritura_url = $1 WHERE id = $2",
@@ -282,14 +282,15 @@ router.post("/:id/escritura", requireAuth, upload.single("file"), async (req: Re
 });
 
 // DELETE /api/inmuebles/:id/escritura
-router.delete("/:id/escritura", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete("/:id/escritura", requireAuth, requireModulo("bienes-inmuebles", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const { rows } = await pool.query("SELECT escritura_url FROM bienes_inmuebles WHERE id = $1", [id]);
     if (!rows[0]) { res.status(404).json({ error: "Inmueble no encontrado" }); return; }
 
-    const filePath = path.join(uploadsDir, rows[0].escritura_url);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (rows[0].escritura_url) {
+      await supabaseAdmin.storage.from(ESCRITURAS_BUCKET).remove([rows[0].escritura_url]);
+    }
 
     await pool.query("UPDATE bienes_inmuebles SET escritura_url = NULL WHERE id = $1", [id]);
     res.json({ data: null });
@@ -299,17 +300,21 @@ router.delete("/:id/escritura", requireAuth, async (req: Request, res: Response)
   }
 });
 
-// GET /api/inmuebles/:id/escritura/url — URL para descargar el PDF
-router.get("/:id/escritura/url", requireAuth, async (req: Request, res: Response): Promise<void> => {
+// GET /api/inmuebles/:id/escritura/url — URL firmada y temporal para descargar el PDF
+router.get("/:id/escritura/url", requireAuth, requireModulo("bienes-inmuebles", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const { rows } = await pool.query("SELECT escritura_url FROM bienes_inmuebles WHERE id = $1", [id]);
     if (!rows[0] || !rows[0].escritura_url) { res.status(404).json({ error: "Sin escritura" }); return; }
 
-    // Devolver la URL pública del archivo
-    const apiBase = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5199}`;
-    res.json({ data: { url: `${apiBase}/uploads/escrituras/${rows[0].escritura_url}` } });
+    const { data, error } = await supabaseAdmin.storage
+      .from(ESCRITURAS_BUCKET)
+      .createSignedUrl(rows[0].escritura_url, 600);
+    if (error || !data) { throw error || new Error("No se pudo generar la URL"); }
+
+    res.json({ data: { url: data.signedUrl } });
   } catch (err) {
+    console.error("getEscrituraUrl error:", err);
     res.status(500).json({ error: "Error al obtener URL de escritura" });
   }
 });
