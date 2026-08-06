@@ -1,8 +1,66 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, hasModuloAccess } from "../middleware/auth";
 
 const router = Router();
+
+// activos sirve dos módulos distintos según `tipo` (1 = bienes-muebles, 2 = enseres)
+// — requireModulo por sí solo no alcanza porque la clave depende del request.
+const TIPO_CLAVE: Record<number, string> = { 1: "bienes-muebles", 2: "enseres" };
+
+function requireActivoModulo(needsEdit: boolean) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user) { res.status(401).json({ error: "No autorizado" }); return; }
+    if (req.user.permisos === 1) { next(); return; }
+
+    try {
+      let tipo: number | undefined;
+      if (req.body?.tipo !== undefined) tipo = Number(req.body.tipo);
+      else if (req.query?.tipo !== undefined) tipo = Number(req.query.tipo);
+
+      if (tipo === undefined && req.params?.id) {
+        const { rows } = await pool.query("SELECT tipo FROM activos WHERE id_consecutivo = $1", [parseInt(req.params.id)]);
+        tipo = rows[0]?.tipo;
+      }
+
+      if (tipo === undefined && Array.isArray(req.body?.ids) && req.body.ids.length > 0) {
+        const { rows } = await pool.query(
+          "SELECT DISTINCT tipo FROM activos WHERE id_consecutivo = ANY($1)",
+          [req.body.ids.map(Number)]
+        );
+        for (const row of rows) {
+          const clave = TIPO_CLAVE[row.tipo];
+          if (!clave || !(await hasModuloAccess(req.user.id, clave, needsEdit))) {
+            res.status(403).json({ error: "Sin acceso al módulo" });
+            return;
+          }
+        }
+        next();
+        return;
+      }
+
+      if (tipo === undefined) {
+        // sin filtro de tipo (lecturas generales): basta con acceso de vista a alguno de los dos
+        const okMuebles = await hasModuloAccess(req.user.id, "bienes-muebles", needsEdit);
+        const okEnseres = await hasModuloAccess(req.user.id, "enseres", needsEdit);
+        if (!okMuebles && !okEnseres) { res.status(403).json({ error: "Sin acceso al módulo" }); return; }
+        next();
+        return;
+      }
+
+      const clave = TIPO_CLAVE[tipo];
+      if (!clave) { res.status(400).json({ error: "Tipo de activo inválido" }); return; }
+      if (!(await hasModuloAccess(req.user.id, clave, needsEdit))) {
+        res.status(403).json({ error: "Sin acceso al módulo" });
+        return;
+      }
+      next();
+    } catch (err) {
+      console.error("[requireActivoModulo] Error:", err);
+      res.status(500).json({ error: "Error verificando permisos" });
+    }
+  };
+}
 
 // Normalize DB values to a stable audit string for comparison
 function toAuditStr(val: unknown): string | null {
@@ -38,7 +96,7 @@ async function auditLog(
 }
 
 // GET /api/activos — lista paginada con filtros
-router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       tipo,
@@ -128,7 +186,7 @@ router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> 
 });
 
 // GET /api/activos/reporte — todos los activos para exportar (sin paginar)
-router.get("/reporte", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/reporte", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { tipo, sinAsignar, fechaInicio, fechaFin } = req.query as Record<string, string>;
 
@@ -173,7 +231,7 @@ router.get("/reporte", requireAuth, async (req: Request, res: Response): Promise
 });
 
 // GET /api/activos/total-costo — suma de costos con filtros
-router.get("/total-costo", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/total-costo", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { tipo, search, clasificacion, estatus, sinResguardante } = req.query as Record<string, string>;
 
@@ -209,7 +267,7 @@ router.get("/total-costo", requireAuth, async (req: Request, res: Response): Pro
 });
 
 // GET /api/activos/por-nomina/:nomina
-router.get("/por-nomina/:nomina", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/por-nomina/:nomina", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { nomina } = req.params;
     const { tipo } = req.query as Record<string, string>;
@@ -257,7 +315,7 @@ router.get("/por-nomina/:nomina", requireAuth, async (req: Request, res: Respons
 });
 
 // GET /api/activos/check-inventario?numero=XX&excludeId=YY
-router.get("/check-inventario", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/check-inventario", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { numero, excludeId } = req.query as Record<string, string>;
     const params: unknown[] = [numero];
@@ -272,7 +330,7 @@ router.get("/check-inventario", requireAuth, async (req: Request, res: Response)
 });
 
 // GET /api/activos/historia?numero=XX
-router.get("/historia", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/historia", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
     const numInv = req.query.numero as string;
     if (!numInv) { res.status(400).json({ error: "Falta parámetro numero" }); return; }
@@ -307,7 +365,7 @@ router.get("/historia", requireAuth, async (req: Request, res: Response): Promis
 });
 
 // POST /api/activos
-router.post("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const dto = req.body;
     const { rows } = await pool.query(
@@ -347,7 +405,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
 });
 
 // PATCH /api/activos/:id
-router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.patch("/:id", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const dto = req.body;
@@ -427,7 +485,7 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<v
 });
 
 // DELETE /api/activos/:id — baja lógica
-router.delete("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete("/:id", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const { rows: prevRows } = await pool.query(
@@ -447,7 +505,7 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response): Promise<
 });
 
 // POST /api/activos/pre-baja
-router.post("/pre-baja", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/pre-baja", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { ids } = req.body as { ids: string[] };
     await pool.query(
@@ -467,7 +525,7 @@ router.post("/pre-baja", requireAuth, async (req: Request, res: Response): Promi
 });
 
 // POST /api/activos/reactivar
-router.post("/reactivar", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/reactivar", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { ids } = req.body as { ids: string[] };
     await pool.query(
@@ -487,7 +545,7 @@ router.post("/reactivar", requireAuth, async (req: Request, res: Response): Prom
 });
 
 // POST /api/activos/baja-definitiva
-router.post("/baja-definitiva", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/baja-definitiva", requireAuth, requireActivoModulo(true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { ids } = req.body as { ids: string[] };
     await pool.query(

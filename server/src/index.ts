@@ -25,12 +25,12 @@ const PORT = parseInt(process.env.PORT || "5199");
 // ── Middlewares ──────────────────────────────────────────
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:8080", "http://localhost:5199"];
+  : ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5199"];
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error("CORS no permitido"));
+    else { console.error("[CORS] Origen rechazado:", origin, "permitidos:", allowedOrigins); callback(new Error("CORS no permitido")); }
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
