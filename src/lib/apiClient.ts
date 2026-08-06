@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-function getToken(): string | null {
+export function getToken(): string | null {
   try {
     const stored = localStorage.getItem("auth:user");
     if (!stored) return null;

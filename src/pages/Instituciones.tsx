@@ -13,6 +13,7 @@ import { EliminarInstitucionDialog } from "@/components/modals/EliminarInstituci
 import { ProtectedPage } from "@/components/ProtectedPage";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 export default function Instituciones() {
   const { toast } = useToast();
@@ -46,6 +47,8 @@ export default function Instituciones() {
     loadInstituciones();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm]);
+
+  useRealtimeRefresh("consignas", loadInstituciones);
 
   const handleEditar = (institucion: Institucion) => {
     setInstitucionSeleccionada(institucion);

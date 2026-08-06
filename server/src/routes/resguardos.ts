@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, requireModulo } from "../middleware/auth";
+import { emitChange } from "../realtime";
 
 const router = Router();
 
@@ -100,6 +101,7 @@ router.post("/", requireAuth, requireModulo("resguardos", true), async (req: Req
     );
     await Promise.all(logInserts);
 
+    emitChange("resguardos", "create");
     res.status(201).json({ data: null });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -168,6 +170,8 @@ router.post("/reasignar", requireAuth, requireModulo("resguardos", true), async 
       req.user!, req.ip
     );
 
+    emitChange("resguardos", "update");
+    emitChange("activos", "update");
     res.json({ data: null });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -247,6 +251,8 @@ router.post("/traspasar", requireAuth, requireModulo("resguardos", true), async 
       req.user!, req.ip
     );
 
+    emitChange("resguardos", "update");
+    emitChange("activos", "update");
     res.json({ data: { transferidos: numerosInventario.length } });
   } catch (err) {
     await client.query("ROLLBACK");

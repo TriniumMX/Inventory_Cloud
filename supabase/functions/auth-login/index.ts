@@ -181,6 +181,7 @@ serve(async (req) => {
       { alg: "HS256", typ: "JWT" },
       {
         sub: usuarioData.id_usuario.toString(),
+        id: usuarioData.id_usuario,
         usuario: usuarioData.usuario,
         nombre: usuarioData.nombre,
         permisos: usuarioData.permisos,

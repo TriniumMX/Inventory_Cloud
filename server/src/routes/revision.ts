@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, requireModulo } from "../middleware/auth";
+import { emitChange } from "../realtime";
 
 const router = Router();
 
@@ -98,6 +99,7 @@ router.put("/:id", requireAuth, requireModulo("revisiones", true), async (req: R
       );
     }
 
+    emitChange("revision", isNew ? "create" : "update", id);
     res.json({ data: null });
   } catch (err) {
     console.error("upsert revision error:", err);
@@ -121,6 +123,7 @@ router.patch("/:id/finalizar", requireAuth, requireModulo("revisiones", true), a
       req.user!, req.ip
     );
 
+    emitChange("revision", "update", id);
     res.json({ data: null });
   } catch (err) {
     console.error("finalizar revision error:", err);

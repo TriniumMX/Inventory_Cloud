@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { pool } from "../db";
 import { requireAuth, hasModuloAccess } from "../middleware/auth";
+import { emitChange } from "../realtime";
 
 const router = Router();
 
@@ -414,6 +415,7 @@ router.post("/", requireAuth, requireActivoModulo(true), async (req: Request, re
         dto.numeroInventario, req.user!, req.ip);
     }
 
+    emitChange("activos", "create", newId);
     res.status(201).json({ data: rows[0] });
   } catch (err) {
     console.error("createActivo error:", err);
@@ -494,6 +496,7 @@ router.patch("/:id", requireAuth, requireActivoModulo(true), async (req: Request
       await Promise.all(logInserts);
     }
 
+    emitChange("activos", "update", id);
     res.json({ data: rows[0] });
   } catch (err) {
     console.error("updateActivo error:", err);
@@ -514,6 +517,7 @@ router.delete("/:id", requireAuth, requireActivoModulo(true), async (req: Reques
 
     await auditLog("activos", String(id), "DELETE", null, numInv, null, req.user!, req.ip);
 
+    emitChange("activos", "delete", id);
     res.json({ data: null });
   } catch (err) {
     console.error("deleteActivo error:", err);
@@ -535,6 +539,7 @@ router.post("/pre-baja", requireAuth, requireActivoModulo(true), async (req: Req
     );
     await Promise.all(logInserts);
 
+    emitChange("activos", "update");
     res.json({ data: null });
   } catch (err) {
     res.status(500).json({ error: "Error al marcar pre-baja" });
@@ -555,6 +560,7 @@ router.post("/reactivar", requireAuth, requireActivoModulo(true), async (req: Re
     );
     await Promise.all(logInserts);
 
+    emitChange("activos", "update");
     res.json({ data: null });
   } catch (err) {
     res.status(500).json({ error: "Error al reactivar activos" });
@@ -575,6 +581,7 @@ router.post("/baja-definitiva", requireAuth, requireActivoModulo(true), async (r
     );
     await Promise.all(logInserts);
 
+    emitChange("activos", "delete");
     res.json({ data: null });
   } catch (err) {
     res.status(500).json({ error: "Error en baja definitiva" });

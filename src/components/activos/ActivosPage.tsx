@@ -26,6 +26,7 @@ import type { LucideIcon } from "lucide-react";
 import { ReasignarBienModal } from "@/components/modals/ReasignarBienModal";
 import type { LabelPreferences } from "@/lib/labelUtils";
 import { listActivos, getTotalCostoActivos } from "@/lib/api";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 import { Activo } from "@/lib/types";
 import { mapSqlToActivo } from "@/lib/mappers";
 import { useCatalogCache } from "@/hooks/useCatalogCache";
@@ -159,6 +160,8 @@ export default function ActivosPage({
   useEffect(() => {
     loadData();
   }, [debouncedSearchTerm, clasificacionFilter, estatusFilter, sinResguardante, page]);
+
+  useRealtimeRefresh("activos", loadData);
 
   useEffect(() => {
     const params: Record<string, string> = {};

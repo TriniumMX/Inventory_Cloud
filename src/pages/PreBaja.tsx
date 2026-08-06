@@ -13,6 +13,7 @@ import { mapSqlToActivo } from "@/lib/mappers";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedPage } from "@/components/ProtectedPage";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 import { SecureButton } from "@/components/SecureButton";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -52,6 +53,7 @@ export default function PreBaja() {
   };
 
   useEffect(() => { loadData(); }, [debouncedSearch, page]);
+  useRealtimeRefresh("activos", loadData);
   useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   const handleToggleSelect = (id: string) => {

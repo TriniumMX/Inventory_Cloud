@@ -21,6 +21,7 @@ import { CambiarEstatusModal } from "@/components/modals/CambiarEstatusModal";
 import { Clasificacion, CuentaContable } from "@/lib/types";
 import { listClasificaciones, listCuentasContables } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 export default function Almacen() {
   const { toast } = useToast();
@@ -75,6 +76,7 @@ export default function Almacen() {
   };
 
   useEffect(() => { loadData(); }, [debouncedSearch, tipoFilter, page]);
+  useRealtimeRefresh("activos", loadData);
   useEffect(() => { setPage(1); }, [debouncedSearch, tipoFilter]);
 
   const columns = [
