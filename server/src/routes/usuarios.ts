@@ -1,9 +1,11 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireModulo } from "../middleware/auth";
 
 const router = Router();
+
+const PERMISOS_VALIDOS = new Set([1, 2, 3]);
 
 async function auditLog(
   tabla: string,
@@ -25,8 +27,43 @@ async function auditLog(
   );
 }
 
+// POST /api/usuarios/me/password — cambio de la propia contraseña, cualquier usuario autenticado
+router.post("/me/password", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { passwordActual, passwordNueva } = req.body;
+    if (!passwordActual || !passwordNueva) {
+      res.status(400).json({ error: "Faltan la contraseña actual o la nueva" });
+      return;
+    }
+
+    const { rows } = await pool.query(
+      "SELECT password_hash, password FROM usuarios WHERE id_usuario = $1", [req.user!.id]
+    );
+    const row = rows[0];
+    if (!row) { res.status(404).json({ error: "Usuario no encontrado" }); return; }
+
+    const valid = row.password_hash
+      ? await bcrypt.compare(passwordActual, row.password_hash)
+      : row.password === passwordActual;
+    if (!valid) { res.status(400).json({ error: "La contraseña actual es incorrecta" }); return; }
+
+    const newHash = await bcrypt.hash(passwordNueva, 10);
+    await pool.query(
+      "UPDATE usuarios SET password_hash = $1, password = NULL WHERE id_usuario = $2",
+      [newHash, req.user!.id]
+    );
+
+    await auditLog("usuarios", String(req.user!.id), "UPDATE", "password", "***", "***", req.user!, req.ip);
+
+    res.json({ data: { message: "Contraseña cambiada exitosamente" } });
+  } catch (err) {
+    console.error("changeOwnPassword error:", err);
+    res.status(500).json({ error: "Error al actualizar la contraseña" });
+  }
+});
+
 // GET /api/usuarios
-router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/", requireAuth, requireModulo("usuarios", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { q, search, page = "1", pageSize = "50" } = req.query as Record<string, string>;
     const term = q || search || "";
@@ -67,9 +104,14 @@ router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> 
 });
 
 // POST /api/usuarios
-router.post("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/", requireAuth, requireModulo("usuarios", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { nombre, usuario, password, permisos } = req.body;
+
+    if (permisos !== undefined && !PERMISOS_VALIDOS.has(permisos)) {
+      res.status(400).json({ error: "Valor de permisos inválido" });
+      return;
+    }
 
     // Verificar que el usuario no exista
     const { rows: existing } = await pool.query(
@@ -98,10 +140,15 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
 });
 
 // PATCH /api/usuarios/:id
-router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.patch("/:id", requireAuth, requireModulo("usuarios", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const dto = req.body;
+
+    if (dto.permisos !== undefined && !PERMISOS_VALIDOS.has(dto.permisos)) {
+      res.status(400).json({ error: "Valor de permisos inválido" });
+      return;
+    }
 
     // Capturar estado previo
     const { rows: prevRows } = await pool.query(
@@ -173,7 +220,7 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<v
 });
 
 // DELETE /api/usuarios/:id
-router.delete("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete("/:id", requireAuth, requireModulo("usuarios", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const { rows: prevRows } = await pool.query(

@@ -89,6 +89,22 @@ serve(async (req) => {
       );
     }
 
+    // Módulos permitidos (SuperAdmin no necesita filas, bypassea el check en el cliente)
+    let modulosPermitidos: { clave: string; puedeEditar: boolean }[] = [];
+    if (usuarioData.permisos !== 1) {
+      const { data: modulosData, error: modulosError } = await supabase
+        .from('usuario_modulos')
+        .select('puede_editar, modulos(clave)')
+        .eq('id_usuario', usuarioData.id_usuario)
+        .eq('puede_ver', true);
+
+      if (!modulosError && modulosData) {
+        modulosPermitidos = (modulosData as any[])
+          .filter((r) => r.modulos?.clave)
+          .map((r) => ({ clave: r.modulos.clave, puedeEditar: !!r.puede_editar }));
+      }
+    }
+
     // Crear JWT
     const key = await crypto.subtle.importKey(
       "raw",
@@ -118,6 +134,7 @@ serve(async (req) => {
         nombre: usuarioData.nombre,
         usuario: usuarioData.usuario,
         permisos: usuarioData.permisos ?? 1,
+        modulosPermitidos,
         token,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
