@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import type { UsuarioAuth } from "@/lib/types";
 import * as apiAuth from "@/lib/apiAuth";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
 
 interface AuthContextType {
   user: UsuarioAuth | null;
@@ -27,7 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fallback para sesiones antiguas sin modulosPermitidos
         if (!userData.modulosPermitidos) userData.modulosPermitidos = [];
         setUser(userData);
-        connectSocket();
       } catch (error) {
         console.error("Error parsing stored user:", error);
         localStorage.removeItem("auth:user");
@@ -40,13 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user: userData } = await apiAuth.login({ usuario, password });
     setUser(userData);
     localStorage.setItem("auth:user", JSON.stringify(userData));
-    connectSocket();
   };
 
   const logout = () => {
     setUser(null);
     apiAuth.logout();
-    disconnectSocket();
   };
 
   const hasRole = (permisos: 1 | 2 | 3): boolean => {

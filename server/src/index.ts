@@ -2,13 +2,11 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
-import http from "http";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 import { pool } from "./db";
-import { initSocket } from "./realtime";
 import activosRouter from "./routes/activos";
 import catalogosRouter from "./routes/catalogos";
 import inmueblesRouter from "./routes/inmuebles";
@@ -70,10 +68,7 @@ if (fs.existsSync(distPath)) {
 }
 
 // ── Iniciar servidor ─────────────────────────────────────
-const server = http.createServer(app);
-initSocket(server, allowedOrigins);
-
-server.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`✓ Servidor corriendo en http://localhost:${PORT}`);
 });
 

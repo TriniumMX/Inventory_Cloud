@@ -19,7 +19,6 @@ import {
 } from "@/lib/api";
 import { getAllEmployees } from "@/lib/employees";
 import { BienInmueble, TipoInmueble, CuentaContable, Empleado } from "@/lib/types";
-import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 export default function BienesInmuebles() {
   const [data, setData] = useState<BienInmueble[]>([]);
@@ -70,8 +69,6 @@ export default function BienesInmuebles() {
     loadData();
     loadCatalogs();
   }, [loadData, loadCatalogs]);
-
-  useRealtimeRefresh("inmuebles", loadData);
 
   // Calcular estadísticas
   const totalSuperficie = data.reduce(

@@ -1,7 +1,6 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
-import { emitChange } from "../realtime";
 
 const router = Router();
 
@@ -57,7 +56,6 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     const c = rows[0];
     await auditLog(String(c.id_consigna), "CREATE", null, null, nombre, req.user!, req.ip);
 
-    emitChange("consignas", "create", c.id_consigna);
     res.status(201).json({ data: { id: c.id_consigna, nombre: c.consigna, estatus: c.estatus === 1 ? 1 : 0 } });
   } catch (err) {
     console.error("createInstitucion error:", err);
@@ -106,7 +104,6 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response): Promise<v
     }
 
     const c = rows[0];
-    emitChange("consignas", "update", id);
     res.json({ data: { id: c.id_consigna, nombre: c.consigna, estatus: c.estatus === 1 ? 1 : 0 } });
   } catch (err) {
     console.error("updateInstitucion error:", err);
@@ -121,7 +118,6 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response): Promise<
     const { rows: prevRows } = await pool.query("SELECT consigna FROM consignas WHERE id_consigna = $1", [id]);
     await pool.query("DELETE FROM consignas WHERE id_consigna = $1", [id]);
     await auditLog(String(id), "DELETE", null, prevRows[0]?.consigna || "", null, req.user!, req.ip);
-    emitChange("consignas", "delete", id);
     res.json({ data: null });
   } catch (err) {
     console.error("deleteInstitucion error:", err);

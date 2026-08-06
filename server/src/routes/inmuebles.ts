@@ -3,7 +3,6 @@ import multer from "multer";
 import { pool } from "../db";
 import { requireAuth, requireModulo } from "../middleware/auth";
 import { supabaseAdmin } from "../supabaseAdmin";
-import { emitChange } from "../realtime";
 
 const router = Router();
 
@@ -156,7 +155,6 @@ router.post("/", requireAuth, requireModulo("bienes-inmuebles", true), async (re
       [String(newId), dto.numeroInventario, req.user!.id, req.user!.usuario, req.user!.nombre, req.ip || null]
     );
 
-    emitChange("inmuebles", "create", newId);
     res.status(201).json({ data: null });
   } catch (err) {
     console.error("createInmueble error:", err);
@@ -246,7 +244,6 @@ router.patch("/:id", requireAuth, requireModulo("bienes-inmuebles", true), async
     }
     await Promise.all(logInserts);
 
-    emitChange("inmuebles", "update", id);
     res.json({ data: null });
   } catch (err) {
     console.error("updateInmueble error:", err);
@@ -277,7 +274,6 @@ router.post("/:id/escritura", requireAuth, requireModulo("bienes-inmuebles", tru
       [fileName, id]
     );
 
-    emitChange("inmuebles", "update", id);
     res.json({ data: { fileName } });
   } catch (err) {
     console.error("uploadEscritura error:", err);
@@ -297,7 +293,6 @@ router.delete("/:id/escritura", requireAuth, requireModulo("bienes-inmuebles", t
     }
 
     await pool.query("UPDATE bienes_inmuebles SET escritura_url = NULL WHERE id = $1", [id]);
-    emitChange("inmuebles", "update", id);
     res.json({ data: null });
   } catch (err) {
     console.error("deleteEscritura error:", err);
