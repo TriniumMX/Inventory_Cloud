@@ -314,6 +314,23 @@ router.get("/por-nomina/:nomina", requireAuth, requireActivoModulo(false), async
   }
 });
 
+// GET /api/activos/conteo-por-nomina — bienes activos agrupados por último resguardante
+router.get("/conteo-por-nomina", requireAuth, requireActivoModulo(false), async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT ultimo_nomina AS nomina, COUNT(*) AS total_bienes
+        FROM activos
+       WHERE estatus != 0 AND ultimo_nomina IS NOT NULL AND ultimo_nomina != ''
+       GROUP BY ultimo_nomina
+       ORDER BY COUNT(*) DESC
+    `);
+    res.json({ data: rows.map((r) => ({ nomina: r.nomina, totalBienes: parseInt(r.total_bienes) })) });
+  } catch (err) {
+    console.error("conteo-por-nomina error:", err);
+    res.status(500).json({ error: "Error al obtener conteo por nómina" });
+  }
+});
+
 // GET /api/activos/check-inventario?numero=XX&excludeId=YY
 router.get("/check-inventario", requireAuth, requireActivoModulo(false), async (req: Request, res: Response): Promise<void> => {
   try {
