@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireModulo } from "../middleware/auth";
 
 const router = Router();
 
@@ -25,7 +25,7 @@ async function auditLog(
 }
 
 // GET /api/revision?userId=X
-router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/", requireAuth, requireModulo("revisiones", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.query as Record<string, string>;
     const params: unknown[] = ["activa"];
@@ -61,7 +61,7 @@ router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> 
 });
 
 // PUT /api/revision/:id — upsert
-router.put("/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put("/:id", requireAuth, requireModulo("revisiones", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { id_usuario, mode, responsable_id, responsable_nombre, responsable_tipo, expected, scans, notes, estatus } = req.body;
@@ -106,7 +106,7 @@ router.put("/:id", requireAuth, async (req: Request, res: Response): Promise<voi
 });
 
 // PATCH /api/revision/:id/finalizar
-router.patch("/:id/finalizar", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.patch("/:id/finalizar", requireAuth, requireModulo("revisiones", true), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -129,7 +129,7 @@ router.patch("/:id/finalizar", requireAuth, async (req: Request, res: Response):
 });
 
 // GET /api/revision/activos-info?nums=A,B,C — info extra para SessionBoard y SessionSummary
-router.get("/activos-info", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/activos-info", requireAuth, requireModulo("revisiones", false), async (req: Request, res: Response): Promise<void> => {
   try {
     const { nums } = req.query as Record<string, string>;
     if (!nums) { res.json({ data: [] }); return; }
