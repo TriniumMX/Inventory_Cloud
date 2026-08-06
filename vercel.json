@@ -1,5 +1,7 @@
 {
+  "installCommand": "pnpm install && pnpm --dir server install",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

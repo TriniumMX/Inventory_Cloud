@@ -25,7 +25,7 @@ const PORT = parseInt(process.env.PORT || "5199");
 // ── Middlewares ──────────────────────────────────────────
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5199"];
+  : ["https://inventory-cloud-pi.vercel.app", "http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:5199"];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -57,29 +57,33 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// ── Servir frontend estático (producción) ─────────────────
-const distPath = path.resolve(__dirname, "../../dist");
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  // SPA fallback — React Router
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+// En Vercel el frontend lo sirve el hosting estático y esta función solo
+// atiende /api/*, así que ni el estático ni app.listen() aplican ahí.
+if (!process.env.VERCEL) {
+  // ── Servir frontend estático (producción local / build propio) ─────
+  const distPath = path.resolve(__dirname, "../../dist");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    // SPA fallback — React Router
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  // ── Iniciar servidor ─────────────────────────────────────
+  const server = app.listen(PORT, () => {
+    console.log(`✓ Servidor corriendo en http://localhost:${PORT}`);
   });
+
+  // Graceful shutdown: cierra el pool de BD antes de salir para no dejar conexiones zombi
+  const shutdown = () => {
+    server.close(() => {
+      pool.end().then(() => process.exit(0)).catch(() => process.exit(1));
+    });
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
-
-// ── Iniciar servidor ─────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log(`✓ Servidor corriendo en http://localhost:${PORT}`);
-});
-
-// Graceful shutdown: cierra el pool de BD antes de salir para no dejar conexiones zombi
-async function shutdown() {
-  server.close(() => {
-    pool.end().then(() => process.exit(0)).catch(() => process.exit(1));
-  });
-}
-
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
 
 export default app;
