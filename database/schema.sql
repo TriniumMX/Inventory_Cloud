@@ -64,6 +64,16 @@ CREATE TABLE usuarios (
     permisos      SMALLINT      -- 1=SuperAdmin, 2=Editor, 3=Consulta
 );
 
+-- Rate limiting anti fuerza bruta / credential stuffing del login.
+-- Se guarda en la base (no en memoria del proceso) porque el login puede
+-- correr detrás de balanceo/serverless, donde no hay estado confiable entre invocaciones.
+CREATE TABLE auth_login_attempts (
+    identifier       TEXT PRIMARY KEY,
+    attempts         INTEGER NOT NULL DEFAULT 0,
+    first_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    locked_until     TIMESTAMPTZ
+);
+
 -- ─────────────────────────────────────────────
 -- 4. ACTIVOS (bienes muebles + enseres)
 -- ─────────────────────────────────────────────
@@ -249,10 +259,49 @@ CREATE INDEX idx_audit_logs_created_at     ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_logs_usuario        ON audit_logs(id_usuario);
 
 -- ─────────────────────────────────────────────
+-- 10. EMPLEADOS (catálogo de nómina, sin FK a resguardos —
+--     la relación por número de nómina es a nivel de app, no de base)
+-- ─────────────────────────────────────────────
+
+CREATE TABLE empleados (
+    nomina       TEXT PRIMARY KEY,
+    nombre       TEXT NOT NULL,
+    departamento TEXT,
+    puesto       TEXT,
+    activo       TEXT NOT NULL DEFAULT 'A'  -- 'A'=Activo, 'B'=Baja
+);
+
+-- ─────────────────────────────────────────────
+-- 11. MÓDULOS Y PERMISOS
+--     Ver también database/migration_modulos.sql, que trae el seed de módulos.
+-- ─────────────────────────────────────────────
+
+CREATE TABLE modulos (
+    id_modulo SERIAL      PRIMARY KEY,
+    clave     VARCHAR(50) NOT NULL UNIQUE,   -- igual al slug de la URL, ej. 'almacen'
+    nombre    VARCHAR(100) NOT NULL,
+    grupo     VARCHAR(50) NOT NULL,           -- 'INVENTARIO' | 'GESTIÓN' | 'SISTEMA'
+    orden     SMALLINT    NOT NULL DEFAULT 0  -- orden dentro del grupo
+);
+
+CREATE TABLE usuario_modulos (
+    id_usuario   INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    id_modulo    INTEGER NOT NULL REFERENCES modulos(id_modulo)   ON DELETE CASCADE,
+    puede_ver    BOOLEAN NOT NULL DEFAULT TRUE,
+    puede_editar BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (id_usuario, id_modulo)
+);
+
+CREATE INDEX idx_usuario_modulos_usuario ON usuario_modulos(id_usuario);
+
+-- ─────────────────────────────────────────────
 -- FIN DEL SCHEMA
 -- ─────────────────────────────────────────────
 -- Tablas creadas: clasificacion, consignas, ctas_contables, tipos_inmueble,
---                 usuarios, activos, activos_stg, resguardos,
---                 bienes_inmuebles, revision_sesiones, audit_logs
+--                 usuarios, auth_login_attempts, activos, activos_stg, resguardos,
+--                 bienes_inmuebles, revision_sesiones, audit_logs, empleados,
+--                 modulos, usuario_modulos
 -- Triggers: trigger_update_inmueble_modified, trg_revision_sesiones_updated_at
+-- Después de correr este archivo, correr database/migration_modulos.sql para
+-- sembrar el catálogo de módulos (o insertar las mismas filas a mano).
 -- Índices: 9 índices (1 UNIQUE parcial en activos, 8 normales)
