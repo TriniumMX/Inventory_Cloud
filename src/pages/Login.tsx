@@ -72,7 +72,7 @@ export default function Login() {
     <div className="fixed inset-0 z-[100] flex flex-col lg:flex-row w-full bg-background overflow-y-auto overflow-x-hidden lg:overflow-hidden">
       {/* Branding Section (Top on Mobile, Left on Desktop) */}
       <div
-        className="relative flex flex-col lg:w-1/2 w-full min-h-[35vh] lg:min-h-full overflow-hidden"
+        className="relative flex flex-col lg:w-1/2 w-full min-h-[26vh] sm:min-h-[32vh] lg:min-h-full overflow-hidden shrink-0"
         style={{ background: "linear-gradient(135deg, #0d1f4e 0%, #112461 50%, #0e1f52 100%)" }}
       >
         
@@ -91,12 +91,12 @@ export default function Login() {
 
         {/* Logo and branding */}
         <div
-          className="relative z-10 flex flex-col items-center justify-center w-full flex-1 p-8 lg:p-12 lg:pr-24 pb-12 md:pb-16 lg:pb-12"
-          style={{ paddingTop: "calc(env(safe-area-inset-top) + 2rem)" }}
+          className="relative z-10 flex flex-col items-center justify-center w-full flex-1 p-6 sm:p-8 lg:p-12 lg:pr-24 pb-8 sm:pb-12 md:pb-16 lg:pb-12"
+          style={{ paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)" }}
         >
-          <div className="bg-white rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-10 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.3)] ring-4 lg:ring-8 ring-white/10 transition-transform duration-500 hover:scale-105 relative group">
-            <div className="absolute inset-0 bg-primary/5 rounded-3xl lg:rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <img src={logo} alt="Inventory Cloud" className="relative z-10 w-24 lg:w-52 h-auto object-contain" />
+          <div className="bg-white rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] p-4 sm:p-5 lg:p-10 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.3)] ring-4 lg:ring-8 ring-white/10 transition-transform duration-500 hover:scale-105 relative group">
+            <div className="absolute inset-0 bg-primary/5 rounded-2xl sm:rounded-3xl lg:rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <img src={logo} alt="Inventory Cloud" className="relative z-10 w-16 sm:w-24 lg:w-52 h-auto object-contain" />
           </div>
 
           {/* Creative Interactive Logistics Network (Desktop only) */}
@@ -173,8 +173,11 @@ export default function Login() {
       </div>
 
       {/* Form Section (Bottom on Mobile, Right on Desktop) */}
-      <div className="flex-1 flex flex-col justify-start lg:justify-center items-center p-6 md:p-8 relative min-h-full bg-background">
-        
+      <div
+        className="flex-1 flex flex-col justify-start lg:justify-center items-center p-6 md:p-8 relative min-h-full bg-background"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
+      >
+
         {/* Dynamic & Alive Background Elements (Right Side) */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           {/* Subtle grid pattern matching the left side, but very faint dark-slate dots */}
@@ -195,7 +198,7 @@ export default function Login() {
           
           {/* Welcome Header */}
           <div className="text-center space-y-2 lg:space-y-3">
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">
               Control Patrimonial
             </h2>
             <p className="text-slate-500 text-xs lg:text-sm font-medium">
@@ -304,7 +307,7 @@ export default function Login() {
                   <Heart size={18} className="text-blue-600 fill-blue-600" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-4 text-center rounded-2xl border-slate-100 shadow-2xl bg-white/95 backdrop-blur-md mb-2">
+              <PopoverContent className="z-[110] w-auto p-4 text-center rounded-2xl border-slate-100 shadow-2xl bg-white/95 backdrop-blur-md mb-2">
                 <p className="text-sm font-bold text-slate-800 flex items-center justify-center gap-1.5">
                   Creado con <Heart size={13} className="text-blue-600 fill-blue-600" /> por Trinium
                 </p>
