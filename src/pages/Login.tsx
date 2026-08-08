@@ -69,7 +69,7 @@ export default function Login() {
 
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col lg:flex-row w-full bg-background overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex flex-col lg:flex-row w-full bg-background overflow-y-auto overflow-x-hidden lg:overflow-hidden">
       {/* Branding Section (Top on Mobile, Left on Desktop) */}
       <div
         className="relative flex flex-col lg:w-1/2 w-full min-h-[35vh] lg:min-h-full overflow-hidden"
